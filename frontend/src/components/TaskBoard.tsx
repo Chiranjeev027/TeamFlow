@@ -1,4 +1,5 @@
 // teamflow/frontend/src/components/TaskBoard.tsx
+// Todo OPTIMIZE: Refactor large component into smaller sub-components for TaskCard, TaskDialog, etc.
 import React, { useState, useEffect } from 'react';
 import UserPresence from './UserPresence';
 import TeamManagement from './TeamManagement';
