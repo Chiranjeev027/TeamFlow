@@ -321,7 +321,19 @@ const TaskBoard: React.FC = () => {
     
     return totalCount;
  };
-  const isOwner = user && project && user.id === project.owner._id;
+  const isOwner = user && project && user.id.toString() === project.owner._id.toString();
+  {import.meta.env.DEV && project && (
+    <Alert severity="info" sx={{ mb: 2 }}>
+        <Typography variant="body2">
+        <strong>Ownership Debug:</strong><br/>
+        Current User ID: {user?.id}<br/>
+        Project Owner ID: {project.owner._id}<br/>
+        IDs Match: {user?.id === project.owner._id ? 'YES' : 'NO'}<br/>
+        User: {user?.name}<br/>
+        Owner: {project.owner.name}
+        </Typography>
+    </Alert>
+ )}
     console.log('🔑 Ownership check:', { 
     userId: user?.id, 
     ownerId: project?.owner._id, 

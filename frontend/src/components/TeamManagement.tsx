@@ -160,7 +160,7 @@ const TeamManagement: React.FC<TeamManagementProps> = ({ projectId, open, onClos
     }
   };
 
-  const isOwner = team?.owner?._id?.toString() === user?.id;
+  const isOwner = team?.owner?._id?.toString() === user?.id?.toString();
   console.log('🔍 TeamManagement - Ownership Check:', {
     teamOwnerId: team?.owner._id,
     currentUserId: user?.id,
