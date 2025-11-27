@@ -1,6 +1,6 @@
-// teamflow/backend/src/routes/projects.ts
+// src/routes/projects.ts
 import express from 'express';
-import Project from '../models/Project';
+import Project, { IProjectPopulated } from '../models/Project';
 import Task from '../models/Task';
 import { protect } from '../middleware/auth';
 import User from '../models/User';
@@ -70,35 +70,6 @@ router.get('/:id', protect, async (req: any, res) => {
 
     res.json({ project, tasks });
   } catch (error: any) {
-    res.status(500).json({ error: 'Server error: ' + error.message });
-  }
-});
-
-
-// Get project members
-router.get('/:projectId/members', protect, async (req: any, res) => {
-  try {
-    console.log('Fetching members for project:', req.params.projectId);
-    
-    const project = await Project.findById(req.params.projectId)
-      .populate('members', 'name email isOnline lastSeen')
-      .populate('owner', 'name email isOnline lastSeen');
-
-    if (!project) {
-      return res.status(404).json({ error: 'Project not found' });
-    }
-
-    // Type-safe way to access owner properties
-    const populatedOwner = project.owner as any;
-    console.log('Found project members:', project.members.length);
-    console.log('Owner online status:', populatedOwner.isOnline);
-    
-    res.json({
-      owner: populatedOwner,
-      members: project.members
-    });
-  } catch (error: any) {
-    console.error('Error fetching members:', error);
     res.status(500).json({ error: 'Server error: ' + error.message });
   }
 });
@@ -197,23 +168,28 @@ router.delete('/:projectId/members/:memberId', protect, async (req: any, res) =>
   }
 });
 
-// Get project members
+// Get project members - FIXED with proper typing
 router.get('/:projectId/members', protect, async (req: any, res) => {
   try {
     console.log('Fetching members for project:', req.params.projectId);
     
     const project = await Project.findById(req.params.projectId)
       .populate('members', 'name email isOnline lastSeen')
-      .populate('owner', 'name email');
+      .populate('owner', 'name email isOnline lastSeen');
 
     if (!project) {
       return res.status(404).json({ error: 'Project not found' });
     }
 
-    console.log('Found project members:', project.members.length);
+    // Use type assertion to IProjectPopulated to fix TypeScript error
+    const populatedProject = project as unknown as IProjectPopulated;
+    
+    console.log('Found project members:', populatedProject.members.length);
+    console.log('Owner online status:', populatedProject.owner.isOnline);
+    
     res.json({
-      owner: project.owner,
-      members: project.members
+      owner: populatedProject.owner,
+      members: populatedProject.members
     });
   } catch (error: any) {
     console.error('Error fetching members:', error);

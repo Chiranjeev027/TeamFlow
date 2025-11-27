@@ -19,11 +19,13 @@ import {
   Chip,
   Alert,
   CircularProgress,
-  IconButton
+  IconButton,
+  Avatar
 } from '@mui/material';
-import { Add, Schedule, Person, Edit, Delete } from '@mui/icons-material';
+import { Add, Schedule, Edit, Delete } from '@mui/icons-material';
 import { useParams } from 'react-router-dom';
 import { useSocket } from '../context/SocketContext';
+import { useAuth } from '../context/AuthContext';
 
 interface Task {
   _id: string;
@@ -52,6 +54,7 @@ const TaskBoard: React.FC = () => {
   const [open, setOpen] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(true);
+  const { user } = useAuth();
   const [formData, setFormData] = useState({
     title: '',
     description: '',
@@ -66,127 +69,139 @@ const TaskBoard: React.FC = () => {
 
   const fetchProjectData = async () => {
     try {
-        console.log('🔄 Fetching project data for:', projectId);
-        setLoading(true);
-        const token = localStorage.getItem('token');
-        
-        const response = await fetch(`/api/projects/${projectId}`, {
+      console.log('🔄 Fetching project data for:', projectId);
+      const token = localStorage.getItem('token');
+      const response = await fetch(`/api/projects/${projectId}`, {
         headers: {
-            'Authorization': `Bearer ${token}`
+          'Authorization': `Bearer ${token}`
         }
-        });
-        
-        console.log('📡 Response status:', response.status);
-        
-        if (!response.ok) {
+      });
+      
+      console.log('📡 Response status:', response.status);
+      
+      if (!response.ok) {
         const errorText = await response.text();
         console.error('❌ Failed to fetch project:', errorText);
         throw new Error(`Failed to fetch project: ${response.status}`);
-        }
-        
-        const data = await response.json();
-        console.log('✅ Project data received:', data);
-        console.log('📋 Tasks count:', data.tasks?.length || 0);
-        
-        setProject(data.project);
-        setTasks(data.tasks || []);
+      }
+      
+      const data = await response.json();
+      console.log('✅ Project data received:', data);
+      console.log('📋 Tasks count:', data.tasks?.length || 0);
+      console.log('👥 Team members count:', data.project.members?.length || 0);
+      console.log('👑 Project owner:', data.project.owner?.name);
+      
+      setProject(data.project);
+      setTasks(data.tasks || []);
     } catch (error: any) {
-        console.error('💥 Error fetching project:', error);
-        setError(error.message);
+      console.error('💥 Error fetching project:', error);
+      setError(error.message);
     } finally {
-        setLoading(false);
+      setLoading(false);
     }
   };
 
   useEffect(() => {
     if (projectId) {
-        fetchProjectData();
-        
-        // Socket.io real-time updates
-        if (socket) {
+      fetchProjectData();
+      
+      // Socket.io real-time updates
+      if (socket) {
         socket.emit('join-project', projectId);
         
         socket.on('task-created', (newTask: Task) => {
-            console.log('📦 New task received via socket:', newTask);
-            setTasks(prev => [...prev, newTask]);
+          console.log('📦 New task received via socket:', newTask);
+          setTasks(prev => [...prev, newTask]);
         });
 
         socket.on('task-updated', (updatedTask: Task) => {
-            console.log('✏️ Task updated via socket:', updatedTask);
-            setTasks(prev => prev.map(task => 
+          console.log('✏️ Task updated via socket:', updatedTask);
+          setTasks(prev => prev.map(task => 
             task._id === updatedTask._id ? updatedTask : task
-            ));
+          ));
         });
 
         socket.on('task-deleted', (deletedTaskId: string) => {
-            console.log('🗑️ Task deleted via socket:', deletedTaskId);
-            setTasks(prev => prev.filter(task => task._id !== deletedTaskId));
+          console.log('🗑️ Task deleted via socket:', deletedTaskId);
+          setTasks(prev => prev.filter(task => task._id !== deletedTaskId));
+        });
+
+        // Handle team updates
+        socket.on('member-added', () => {
+          console.log('👥 Member added via socket, refreshing project...');
+          fetchProjectData();
+        });
+
+        socket.on('member-removed', () => {
+          console.log('👥 Member removed via socket, refreshing project...');
+          fetchProjectData();
         });
 
         // Add connection error handling
         socket.on('connect_error', (error) => {
-            console.error('🔌 Socket connection error:', error);
-            setError('Real-time updates disabled - connection issue');
+          console.error('🔌 Socket connection error:', error);
+          setError('Real-time updates disabled - connection issue');
         });
-        }
+      }
     }
 
     return () => {
-        if (socket && projectId) {
+      if (socket && projectId) {
         socket.emit('leave-project', projectId);
         socket.off('task-created');
         socket.off('task-updated');
         socket.off('task-deleted');
+        socket.off('member-added');
+        socket.off('member-removed');
         socket.off('connect_error');
-        }
+      }
     };
   }, [projectId, socket]);
 
   const createTask = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-        console.log('🔄 Creating task with data:', formData);
-        const token = localStorage.getItem('token');
-    
-        const response = await fetch('/api/tasks', {
+      console.log('🔄 Creating task with data:', formData);
+      const token = localStorage.getItem('token');
+      
+      const response = await fetch('/api/tasks', {
         method: 'POST',
         headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify({
-            ...formData,
-            project: projectId
+          ...formData,
+          project: projectId
         })
-        });
-    
-        console.log('📡 Create task response status:', response.status);
-        
-        if (!response.ok) {
+      });
+      
+      console.log('📡 Create task response status:', response.status);
+      
+      if (!response.ok) {
         const errorData = await response.json();
         console.error('❌ Failed to create task:', errorData);
         throw new Error(errorData.error || 'Failed to create task');
-        }
+      }
 
-        const newTask = await response.json();
-        console.log('✅ Task created successfully:', newTask);
-        
-        // Reset form and close dialog
-        setFormData({
+      const newTask = await response.json();
+      console.log('✅ Task created successfully:', newTask);
+      
+      setFormData({
         title: '',
         description: '',
         status: 'todo',
         priority: 'medium',
         assignee: '',
         dueDate: ''
-        });
-        setOpen(false);
-        
-        // Show success (we'll rely on socket for update)
-        setError('');
+      });
+      setOpen(false);
+      
+      // Show success (we'll rely on socket for update)
+      setError('');
     } catch (error: any) {
-        console.error('💥 Error creating task:', error);
-        setError(error.message);
+      console.error('💥 Error creating task:', error);
+      setError(error.message);
     }
   };
 
@@ -273,19 +288,53 @@ const TaskBoard: React.FC = () => {
   };
 
   const columns = [
-    { id: 'todo', title: 'To Do', color: '#ef4444' }, // Fixed title
+    { id: 'todo', title: 'To Do', color: '#ef4444' },
     { id: 'in-progress', title: 'In Progress', color: '#f59e0b' },
     { id: 'done', title: 'Done', color: '#10b981' }
   ];
 
+  // Function to handle team updates
+  const handleTeamUpdate = () => {
+    console.log('Team updated, refreshing project data...');
+    fetchProjectData();
+  };
+
+  // Calculate correct team count - owner + unique members (excluding owner from members array)
+  const getTeamCount = () => {
+    if (!project) return 0;
+    
+    // Filter out the owner from members array to avoid double counting
+    const uniqueMembers = project.members.filter(member => 
+        member._id !== project.owner._id
+    );
+    
+    const totalCount = 1 + uniqueMembers.length; // Owner + unique members
+    
+    console.log('👥 Team count calculation:');
+    console.log('  - Owner:', project.owner.name);
+    console.log('  - Current user:', user?.name);
+    console.log('  - Is current user owner?', user?.id === project.owner._id);
+    console.log('  - Total members in array:', project.members.length);
+    console.log('  - Unique members (excluding owner):', uniqueMembers.length);
+    console.log('  - Final team count:', totalCount);
+    
+    return totalCount;
+ };
+  const isOwner = user && project && user.id === project.owner._id;
+    console.log('🔑 Ownership check:', { 
+    userId: user?.id, 
+    ownerId: project?.owner._id, 
+    isOwner 
+  });
+
   if (loading) {
     return (
-        <Box display="flex" justifyContent="center" alignItems="center" minHeight="400px" flexDirection="column">
+      <Box display="flex" justifyContent="center" alignItems="center" minHeight="400px" flexDirection="column">
         <CircularProgress />
         <Typography variant="body2" sx={{ mt: 2 }}>
-            Loading project data...
+          Loading project data...
         </Typography>
-        </Box>
+      </Box>
     );
   }
 
@@ -298,39 +347,76 @@ const TaskBoard: React.FC = () => {
       </Box>
     );
   }
-    // this function to handle team updates
-    const handleTeamUpdate = () => {
-        fetchProjectData(); // Refresh project data when team changes
-    };
 
   return (
     <Box>
       <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
         <Box>
-            <Typography variant="h4">{project.name}</Typography>
-            <Typography color="textSecondary">{project.description}</Typography>
+          <Typography variant="h4">{project.name}</Typography>
+          <Typography color="textSecondary">{project.description}</Typography>
         </Box>
-        <Box display="flex" gap={2}>
-            <Button
-                variant="outlined"
-                startIcon={<Groups />}
-                onClick={() => setTeamOpen(true)}
+        <Box display="flex" gap={2} alignItems="center">
+          <Button
+            variant={isOwner ? "contained" : "outlined"}
+            startIcon={<Groups />}
+            onClick={() => setTeamOpen(true)}
+            sx={{ position: 'relative' }}
+            color={isOwner ? "primary" : "inherit"}
+          >
+            {isOwner ? "Invite Team" : "View Team"} ({getTeamCount()})
+            {isOwner && getTeamCount() === 1 && (
+            <Box
+                sx={{
+                    position: 'absolute',
+                    top: -8,
+                    right: -8,
+                    width: 16,
+                    height: 16,
+                    borderRadius: '50%',
+                    bgcolor: 'warning.main',
+                    color: 'white',
+                    fontSize: '0.7rem',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center'
+                }}
             >
-                Team ({project.members.length + 1})
-            </Button>
-            <Button
-                variant="contained"
-                startIcon={<Add />}
-                onClick={() => setOpen(true)}
-            >
-                Add Task
-            </Button>
+                +
+            </Box>
+         )}
+         </Button>
+          <Button
+            variant="contained"
+            startIcon={<Add />}
+            onClick={() => setOpen(true)}
+          >
+            Add Task
+          </Button>
         </Box>
-    </Box>
+      </Box>
 
       {projectId && <UserPresence projectId={projectId} />} 
 
+      {/* Add invitation helper text */}
+      {getTeamCount() === 1 && (
+        <Alert severity="info" sx={{ mb: 2 }}>
+          <Typography variant="body2">
+            <strong>Want to collaborate?</strong> Click "Team" to invite members to this project. 
+            They'll be able to view and edit all tasks.
+          </Typography>
+        </Alert>
+      )}
+
       {error && <Alert severity="error" sx={{ mb: 2 }} onClose={() => setError('')}>{error}</Alert>}
+
+      {/* Debug info - show only in development */}
+      {import.meta.env.DEV && (
+        <Box sx={{ mb: 2, p: 1, backgroundColor: '#f5f5f5', borderRadius: 1 }}>
+          <Typography variant="caption" color="textSecondary">
+            Debug: {tasks.length} tasks loaded • Team: {getTeamCount()} members • Project: {projectId}
+          </Typography>
+        </Box>
+      )}
 
       <Box display="grid" gridTemplateColumns="repeat(3, 1fr)" gap={3} sx={{ minHeight: '600px' }}>
         {columns.map((column) => (
@@ -427,7 +513,16 @@ const TaskBoard: React.FC = () => {
                     
                     <Box display="flex" justifyContent="space-between" alignItems="center">
                       <Box display="flex" alignItems="center" gap={1}>
-                        <Person fontSize="small" color="action" />
+                        <Avatar 
+                          sx={{ 
+                            width: 24, 
+                            height: 24, 
+                            fontSize: '0.8rem',
+                            bgcolor: task.assignee ? 'primary.main' : 'grey.400'
+                          }}
+                        >
+                          {task.assignee ? task.assignee.name.charAt(0).toUpperCase() : 'U'}
+                        </Avatar>
                         <Typography variant="caption">
                           {task.assignee?.name || 'Unassigned'}
                         </Typography>
@@ -502,16 +597,33 @@ const TaskBoard: React.FC = () => {
           </FormControl>
           
           <FormControl fullWidth margin="normal">
-            <InputLabel>Assignee</InputLabel>
+            <InputLabel>Assign to Team Member</InputLabel>
             <Select
               value={formData.assignee}
-              label="Assignee"
+              label="Assign to Team Member"
               onChange={(e) => setFormData({ ...formData, assignee: e.target.value })}
             >
-              <MenuItem value="">Unassigned</MenuItem>
+              <MenuItem value="">
+                <Box display="flex" alignItems="center" gap={1}>
+                  <Avatar sx={{ width: 24, height: 24, fontSize: '0.8rem', bgcolor: 'grey.400' }}>
+                    U
+                  </Avatar>
+                  <span>Unassigned - Anyone can work on this</span>
+                </Box>
+              </MenuItem>
               {project.members.map((member) => (
                 <MenuItem key={member._id} value={member._id}>
-                  {member.name}
+                  <Box display="flex" alignItems="center" gap={1}>
+                    <Avatar sx={{ width: 24, height: 24, fontSize: '0.8rem', bgcolor: 'primary.main' }}>
+                      {member.name.charAt(0).toUpperCase()}
+                    </Avatar>
+                    <Box>
+                      <Typography variant="body1">{member.name}</Typography>
+                      <Typography variant="caption" color="textSecondary">
+                        {member.email}
+                      </Typography>
+                    </Box>
+                  </Box>
                 </MenuItem>
               ))}
             </Select>
@@ -534,23 +646,23 @@ const TaskBoard: React.FC = () => {
         </Box>
       </Dialog>
 
-        {/* Edit Task Dialog */}
-        <Dialog open={!!editTask} onClose={() => setEditTask(null)} maxWidth="sm" fullWidth>
+      {/* Edit Task Dialog */}
+      <Dialog open={!!editTask} onClose={() => setEditTask(null)} maxWidth="sm" fullWidth>
         <Box component="form" onSubmit={updateTask} p={3}>
-            <Typography variant="h5" gutterBottom>
+          <Typography variant="h5" gutterBottom>
             Edit Task
-            </Typography>
-            
-            <TextField
+          </Typography>
+          
+          <TextField
             fullWidth
             label="Task Title"
             value={editTask?.title || ''}
             onChange={(e) => setEditTask(prev => prev ? {...prev, title: e.target.value} : null)}
             margin="normal"
             required
-            />
-            
-            <TextField
+          />
+          
+          <TextField
             fullWidth
             label="Description"
             value={editTask?.description || ''}
@@ -558,60 +670,76 @@ const TaskBoard: React.FC = () => {
             margin="normal"
             multiline
             rows={3}
-            />
-            
-            <FormControl fullWidth margin="normal">
+          />
+          
+          <FormControl fullWidth margin="normal">
             <InputLabel>Status</InputLabel>
             <Select
-                value={editTask?.status || 'todo'}
-                label="Status"
-                onChange={(e) => setEditTask(prev => prev ? {...prev, status: e.target.value as any} : null)}
+              value={editTask?.status || 'todo'}
+              label="Status"
+              onChange={(e) => setEditTask(prev => prev ? {...prev, status: e.target.value as any} : null)}
             >
-                <MenuItem value="todo">To Do</MenuItem>
-                <MenuItem value="in-progress">In Progress</MenuItem>
-                <MenuItem value="done">Done</MenuItem>
+              <MenuItem value="todo">To Do</MenuItem>
+              <MenuItem value="in-progress">In Progress</MenuItem>
+              <MenuItem value="done">Done</MenuItem>
             </Select>
-            </FormControl>
-            
-            <FormControl fullWidth margin="normal">
+          </FormControl>
+          
+          <FormControl fullWidth margin="normal">
             <InputLabel>Priority</InputLabel>
             <Select
-                value={editTask?.priority || 'medium'}
-                label="Priority"
-                onChange={(e) => setEditTask(prev => prev ? {...prev, priority: e.target.value as any} : null)}
+              value={editTask?.priority || 'medium'}
+              label="Priority"
+              onChange={(e) => setEditTask(prev => prev ? {...prev, priority: e.target.value as any} : null)}
             >
-                <MenuItem value="low">Low</MenuItem>
-                <MenuItem value="medium">Medium</MenuItem>
-                <MenuItem value="high">High</MenuItem>
+              <MenuItem value="low">Low</MenuItem>
+              <MenuItem value="medium">Medium</MenuItem>
+              <MenuItem value="high">High</MenuItem>
             </Select>
-            </FormControl>
-            
-            {/* FIXED: Assignee Field */}
-            <FormControl fullWidth margin="normal">
-            <InputLabel>Assignee</InputLabel>
+          </FormControl>
+          
+          {/* FIXED: Enhanced Assignee Field */}
+          <FormControl fullWidth margin="normal">
+            <InputLabel>Assign to Team Member</InputLabel>
             <Select
-                value={editTask?.assignee?._id || ''}
-                label="Assignee"
-                onChange={(e) => {
+              value={editTask?.assignee?._id || ''}
+              label="Assign to Team Member"
+              onChange={(e) => {
                 if (!editTask) return;
-                
                 const selectedMember = project?.members.find(member => member._id === e.target.value);
                 setEditTask({
-                    ...editTask,
-                    assignee: selectedMember || undefined
+                  ...editTask,
+                  assignee: selectedMember || undefined
                 });
-                }}
+              }}
             >
-                <MenuItem value="">Unassigned</MenuItem>
-                {project?.members.map((member) => (
+              <MenuItem value="">
+                <Box display="flex" alignItems="center" gap={1}>
+                  <Avatar sx={{ width: 24, height: 24, fontSize: '0.8rem', bgcolor: 'grey.400' }}>
+                    U
+                  </Avatar>
+                  <span>Unassigned - Anyone can work on this</span>
+                </Box>
+              </MenuItem>
+              {project?.members.map((member) => (
                 <MenuItem key={member._id} value={member._id}>
-                    {member.name}
+                  <Box display="flex" alignItems="center" gap={1}>
+                    <Avatar sx={{ width: 24, height: 24, fontSize: '0.8rem', bgcolor: 'primary.main' }}>
+                      {member.name.charAt(0).toUpperCase()}
+                    </Avatar>
+                    <Box>
+                      <Typography variant="body1">{member.name}</Typography>
+                      <Typography variant="caption" color="textSecondary">
+                        {member.email}
+                      </Typography>
+                    </Box>
+                  </Box>
                 </MenuItem>
-                ))}
+              ))}
             </Select>
-            </FormControl>
-            
-            <TextField
+          </FormControl>
+          
+          <TextField
             fullWidth
             label="Due Date"
             type="date"
@@ -619,20 +747,21 @@ const TaskBoard: React.FC = () => {
             onChange={(e) => setEditTask(prev => prev ? {...prev, dueDate: e.target.value} : null)}
             margin="normal"
             InputLabelProps={{ shrink: true }}
-            />
-            
-            <Box mt={3} display="flex" gap={1} justifyContent="flex-end">
+          />
+          
+          <Box mt={3} display="flex" gap={1} justifyContent="flex-end">
             <Button onClick={() => setEditTask(null)}>Cancel</Button>
             <Button type="submit" variant="contained">Update Task</Button>
-            </Box>
+          </Box>
         </Box>
-        </Dialog>
-        <TeamManagement
-            projectId={projectId!}
-            open={teamOpen}
-            onClose={() => setTeamOpen(false)}
-            onTeamUpdate={handleTeamUpdate}
-        />
+      </Dialog>
+
+      <TeamManagement
+        projectId={projectId!}
+        open={teamOpen}
+        onClose={() => setTeamOpen(false)}
+        onTeamUpdate={handleTeamUpdate}
+      />
     </Box>
   );
 };

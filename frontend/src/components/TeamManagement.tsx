@@ -22,9 +22,9 @@ import {
   Switch,
   FormControlLabel
 } from '@mui/material';
-import { PersonAdd, PersonRemove, Email, Close, Wifi, WifiOff } from '@mui/icons-material';
+import { PersonAdd, PersonRemove, Close, Wifi, WifiOff } from '@mui/icons-material';
 import { useAuth } from '../context/AuthContext';
-import { useSocket } from '../context/SocketContext';
+// no socket usage in TeamManagement currently
 
 interface TeamMember {
   _id: string;
@@ -43,7 +43,7 @@ interface TeamManagementProps {
 
 const TeamManagement: React.FC<TeamManagementProps> = ({ projectId, open, onClose, onTeamUpdate }) => {
   const { user } = useAuth();
-  const socket = useSocket();
+  // Not using socket here - removed to prevent unused variable warning
   const [email, setEmail] = useState('');
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
@@ -74,6 +74,11 @@ const TeamManagement: React.FC<TeamManagementProps> = ({ projectId, open, onClos
       
       const data = await response.json();
       console.log('✅ Team data received:', data);
+      console.log('👑 Team owner:', data.owner);
+      console.log('👥 Team members:', data.members);
+      console.log('🔑 Current user:', user);
+      console.log('❓ Is current user owner?', user?.id === data.owner._id);
+      
       setTeam(data);
     } catch (error: any) {
       console.error('💥 Error fetching team:', error);
@@ -155,7 +160,12 @@ const TeamManagement: React.FC<TeamManagementProps> = ({ projectId, open, onClos
     }
   };
 
-  const isOwner = team?.owner._id === user?.id;
+  const isOwner = team?.owner?._id?.toString() === user?.id;
+  console.log('🔍 TeamManagement - Ownership Check:', {
+    teamOwnerId: team?.owner._id,
+    currentUserId: user?.id,
+    isOwner: isOwner
+  });
 
   // Filter members based on online status
   const filteredMembers = team?.members.filter(member => 
@@ -172,7 +182,9 @@ const TeamManagement: React.FC<TeamManagementProps> = ({ projectId, open, onClos
     <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
       <DialogTitle>
         <Box display="flex" justifyContent="space-between" alignItems="center">
-          <Typography variant="h5">Team Management</Typography>
+          <Typography variant="h5">
+            {isOwner ? 'Manage Team' : 'View Team'}
+          </Typography>
           <IconButton onClick={onClose}>
             <Close />
           </IconButton>
@@ -183,36 +195,50 @@ const TeamManagement: React.FC<TeamManagementProps> = ({ projectId, open, onClos
         {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
         {success && <Alert severity="success" sx={{ mb: 2 }}>{success}</Alert>}
 
-        {/* Invite Member Section */}
+        {/* Debug info - show only in development */}
+        {import.meta.env.DEV && (
+          <Alert severity="info" sx={{ mb: 2 }}>
+            <Typography variant="body2">
+              <strong>Debug Info:</strong> You are {isOwner ? 'the owner' : 'a member'}. 
+              Owner: {team?.owner.name} (ID: {team?.owner._id})
+            </Typography>
+          </Alert>
+        )}
+
+        {/* Invite Member Section - ONLY show if owner */}
         {isOwner && (
           <>
-            <Typography variant="h6" gutterBottom>
-              Invite Team Members
+            <Typography variant="h6" gutterBottom color="primary">
+              ✨ Invite Team Members
             </Typography>
+            <Alert severity="info" sx={{ mb: 2 }}>
+              <Typography variant="body2">
+                Invite team members by email. They'll get access to this entire project and all tasks.
+              </Typography>
+            </Alert>
             <Box component="form" onSubmit={inviteMember} sx={{ mb: 3 }}>
-              <Box display="flex" gap={1}>
+              <Box display="flex" gap={1} alignItems="flex-start">
                 <TextField
                   fullWidth
-                  label="Email Address"
+                  label="Team member's email address"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
                   type="email"
-                  placeholder="Enter team member's email"
+                  placeholder="teammate@example.com"
+                  helperText="User must have a TeamFlow account"
                 />
                 <Button
                   type="submit"
                   variant="contained"
                   startIcon={<PersonAdd />}
                   disabled={loading}
-                  sx={{ minWidth: '120px' }}
+                  sx={{ minWidth: '120px', mt: 1 }}
+                  color="primary"
                 >
-                  Invite
+                  {loading ? 'Inviting...' : 'Invite'}
                 </Button>
               </Box>
-              <Typography variant="body2" color="textSecondary" sx={{ mt: 1 }}>
-                Team members will receive access to this project and can view and manage tasks.
-              </Typography>
             </Box>
             <Divider sx={{ my: 2 }} />
           </>
@@ -285,7 +311,7 @@ const TeamManagement: React.FC<TeamManagementProps> = ({ projectId, open, onClos
 
             {/* Team Members (excluding owner) */}
             {filteredMembers
-              .filter(member => member._id !== team.owner._id) // Don't show owner in members list
+              .filter(member => member._id !== team.owner._id)
               .map((member) => (
               <ListItem key={member._id}>
                 <ListItemAvatar>
@@ -343,13 +369,34 @@ const TeamManagement: React.FC<TeamManagementProps> = ({ projectId, open, onClos
                   secondary={
                     showOnlyOnline 
                       ? "Other team members are currently offline" 
-                      : "Invite team members to collaborate on this project"
+                      : isOwner 
+                        ? "Invite team members to collaborate on this project" 
+                        : "Only the project owner can invite team members"
                   }
                 />
               </ListItem>
             )}
           </List>
         )}
+
+        {/* Help Section */}
+        <Box sx={{ mt: 3, p: 2, backgroundColor: 'grey.50', borderRadius: 1 }}>
+          <Typography variant="subtitle2" gutterBottom color="primary">
+            💡 How Team Collaboration Works:
+          </Typography>
+          <Typography variant="body2" color="textSecondary" sx={{ mb: 1 }}>
+            • <strong>Project owner</strong> can invite team members by email<br/>
+            • <strong>Team members</strong> get access to all tasks in the project<br/>
+            • <strong>Assign tasks</strong> to specific members using the assignee dropdown<br/>
+            • <strong>Real-time updates</strong> - everyone sees changes instantly<br/>
+            • <strong>Online presence</strong> - see who's currently viewing the project
+          </Typography>
+          {!isOwner && (
+            <Typography variant="caption" color="textSecondary">
+              Only the project owner can invite new team members.
+            </Typography>
+          )}
+        </Box>
       </DialogContent>
 
       <DialogActions>
