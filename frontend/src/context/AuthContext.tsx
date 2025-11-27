@@ -4,6 +4,7 @@ import axios from 'axios';
 
 interface User {
   id: string;
+  _id?: string; // Add _id as optional
   name: string;
   email: string;
   isOnline?: boolean;
@@ -31,7 +32,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         if (token) {
           axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
           const response = await axios.get('/api/auth/me');
-          setUser(response.data.user);
+          
+          // Normalize user object to always have id
+          const userData = response.data.user;
+          const normalizedUser = {
+            ...userData,
+            id: userData.id || userData._id // Use id if available, otherwise _id
+          };
+          
+          setUser(normalizedUser);
         }
       } catch (error) {
         console.error('Auth verification failed:', error);
@@ -50,9 +59,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const response = await axios.post('/api/auth/login', { email, password });
       const { token, user } = response.data;
       
+      // Ensure user has id field
+      const normalizedUser = {
+        ...user,
+        id: user.id || user._id // Use id if available, otherwise _id
+      };
+      
       localStorage.setItem('token', token);
       axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-      setUser(user);
+      setUser(normalizedUser);
     } catch (error: any) {
       const message = error.response?.data?.message || 'Login failed';
       throw new Error(message);
@@ -64,9 +79,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const response = await axios.post('/api/auth/register', { name, email, password });
       const { token, user } = response.data;
       
+      // Ensure user has id field
+      const normalizedUser = {
+        ...user,
+        id: user.id || user._id // Use id if available, otherwise _id
+      };
+      
       localStorage.setItem('token', token);
       axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-      setUser(user);
+      setUser(normalizedUser);
     } catch (error: any) {
       const message = error.response?.data?.message || 'Registration failed';
       throw new Error(message);
