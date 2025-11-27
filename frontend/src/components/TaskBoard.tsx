@@ -1,4 +1,5 @@
 // teamflow/frontend/src/components/TaskBoard.tsx
+// Todo OPTIMIZE: Refactor large component into smaller sub-components for TaskCard, TaskDialog, etc.
 import React, { useState, useEffect } from 'react';
 import UserPresence from './UserPresence';
 import TeamManagement from './TeamManagement';
@@ -349,7 +350,7 @@ const TaskBoard: React.FC = () => {
   }
 
   return (
-    <Box>
+    <Box sx={{ width: '100%' }}>
       <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
         <Box>
           <Typography variant="h4">{project.name}</Typography>

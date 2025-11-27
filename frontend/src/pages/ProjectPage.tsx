@@ -19,7 +19,7 @@ const ProjectPage: React.FC = () => {
   const { user, logout } = useAuth();
 
   return (
-    <Box sx={{ flexGrow: 1, minHeight: '100vh', backgroundColor: '#f8fafc' }}>
+    <Box sx={{ flexGrow: 1, minHeight: '100vh', backgroundColor: '#f8fafc', width: '100%' }}>
       <AppBar position="static" elevation={1}>
         <Toolbar>
           <IconButton
@@ -42,7 +42,7 @@ const ProjectPage: React.FC = () => {
         </Toolbar>
       </AppBar>
       
-      <Box sx={{ p: 3 }}>
+      <Box sx={{ p: 3, width: '100%', boxSizing: 'border-box' }}>
         <TaskBoard />
       </Box>
     </Box>
