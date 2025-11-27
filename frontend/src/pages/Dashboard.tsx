@@ -1,5 +1,5 @@
 // teamflow/frontend/src/pages/Dashboard.tsx
-import React from 'react';
+import React, { useState } from 'react';
 import {
   Box,
   AppBar,
@@ -27,11 +27,13 @@ import {
 } from '@mui/icons-material';
 import { useAuth } from '../context/AuthContext';
 import ProjectList from '../components/ProjectList';
+import UserSettings from '../components/UserSettings';
 
 const drawerWidth = 280;
 
 const Dashboard: React.FC = () => {
   const { user, logout } = useAuth();
+  const [activeView, setActiveView] = useState<'dashboard' | 'projects' | 'team' | 'calendar' | 'analytics' | 'settings'>('dashboard');
 
   return (
     <Box sx={{ display: 'flex', minHeight: '100vh', backgroundColor: '#f8fafc' }}>
@@ -61,12 +63,12 @@ const Dashboard: React.FC = () => {
 
         <List sx={{ px: 2, mt: 2 }}>
           {[
-            { text: 'Dashboard', icon: <DashboardIcon /> },
-            { text: 'Projects', icon: <Folder /> },
-            { text: 'Team', icon: <Groups /> },
-            { text: 'Calendar', icon: <CalendarMonth /> },
-            { text: 'Analytics', icon: <BarChart /> },
-            { text: 'Settings', icon: <Settings /> },
+            { text: 'Dashboard', icon: <DashboardIcon />, view: 'dashboard' },
+            { text: 'Projects', icon: <Folder />, view: 'projects' },
+            { text: 'Team', icon: <Groups />, view: 'team' },
+            { text: 'Calendar', icon: <CalendarMonth />, view: 'calendar' },
+            { text: 'Analytics', icon: <BarChart />, view: 'analytics' },
+            { text: 'Settings', icon: <Settings />, view: 'settings' },
           ].map((item) => (
             <ListItem 
               key={item.text}
@@ -77,10 +79,16 @@ const Dashboard: React.FC = () => {
               }}
             >
               <ListItemButton
+                selected={item.view === activeView}
+                onClick={() => setActiveView(item.view as any)}
                 sx={{
                   borderRadius: 2,
-                  '&:hover': {
-                    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                  '&.Mui-selected': {
+                    backgroundColor: 'rgba(255, 255, 255, 0.15)',
+                    border: '1px solid rgba(255, 255, 255, 0.3)',
+                    '&:hover': {
+                      backgroundColor: 'rgba(255, 255, 255, 0.15)',
+                    },
                   },
                 }}
               >
@@ -134,7 +142,7 @@ const Dashboard: React.FC = () => {
       </Drawer>
 
       {/* Main Content */}
-      <Box sx={{ flexGrow: 1, ml: `${drawerWidth}px` }}>
+      <Box sx={{ flexGrow: 1 }}>
         <AppBar 
           position="static" 
           elevation={0}
@@ -147,7 +155,7 @@ const Dashboard: React.FC = () => {
         >
           <Toolbar>
             <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
-              Projects
+              {activeView.charAt(0).toUpperCase() + activeView.slice(1)}
             </Typography>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
               <Typography variant="body2" color="grey.600">
@@ -158,7 +166,7 @@ const Dashboard: React.FC = () => {
         </AppBar>
         
         <Container maxWidth="xl" sx={{ mt: 4 }}>
-          <ProjectList />
+          {activeView === 'settings' ? <UserSettings /> : <ProjectList />}
         </Container>
       </Box>
     </Box>
