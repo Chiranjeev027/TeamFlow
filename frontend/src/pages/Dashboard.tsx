@@ -6,7 +6,6 @@ import {
   Toolbar,
   Typography,
   Button,
-  Container,
   Drawer,
   List,
   ListItem,
@@ -33,7 +32,12 @@ const drawerWidth = 280;
 
 const Dashboard: React.FC = () => {
   const { user, logout } = useAuth();
-  const [activeView, setActiveView] = useState<'dashboard' | 'projects' | 'team' | 'calendar' | 'analytics' | 'settings'>('dashboard');
+  const [activeView, setActiveView] = useState<'dashboard' | 'projects' | 'team' | 'calendar' | 'analytics' | 'settings'>('projects');
+
+  const handleProjectCreated = () => {
+    // Ensure we stay on projects view after creating a project
+    setActiveView('projects');
+  };
 
   return (
     <Box sx={{ display: 'flex', minHeight: '100vh', backgroundColor: '#f8fafc' }}>
@@ -165,9 +169,9 @@ const Dashboard: React.FC = () => {
           </Toolbar>
         </AppBar>
         
-        <Container maxWidth="xl" sx={{ mt: 4 }}>
-          {activeView === 'settings' ? <UserSettings /> : <ProjectList />}
-        </Container>
+        <Box sx={{ width: '100%' }}>
+          {activeView === 'settings' ? <UserSettings /> : <ProjectList onProjectCreated={handleProjectCreated} />}
+        </Box>
       </Box>
     </Box>
   );

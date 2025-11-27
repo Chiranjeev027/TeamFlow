@@ -28,7 +28,11 @@ interface Project {
   createdAt: string;
 }
 
-const ProjectList: React.FC = () => {
+interface ProjectListProps {
+  onProjectCreated?: () => void;
+}
+
+const ProjectList: React.FC<ProjectListProps> = ({ onProjectCreated }) => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [projects, setProjects] = useState<Project[]>([]);
@@ -79,6 +83,11 @@ const ProjectList: React.FC = () => {
       setProjects([...projects, newProject]);
       setFormData({ name: '', description: '' });
       setOpen(false);
+      
+      // Call the callback to ensure we stay on the projects view
+      if (onProjectCreated) {
+        onProjectCreated();
+      }
     } catch (error) {
       console.error('Error creating project:', error);
     }
@@ -260,11 +269,11 @@ const ProjectList: React.FC = () => {
                     <People sx={{ fontSize: 18, color: 'grey.500' }} />
                     <AvatarGroup max={4} sx={{ '& .MuiAvatar-root': { width: 28, height: 28, fontSize: '0.8rem' } }}>
                       <Avatar sx={{ bgcolor: 'primary.main' }}>
-                        {project.owner.name.charAt(0).toUpperCase()}
+                        {project.owner?.name?.charAt(0).toUpperCase() || 'O'}
                       </Avatar>
                       {project.members.slice(0, 3).map((member) => (
                         <Avatar key={member._id} sx={{ bgcolor: 'secondary.main' }}>
-                          {member.name.charAt(0).toUpperCase()}
+                          {member?.name?.charAt(0).toUpperCase() || 'M'}
                         </Avatar>
                       ))}
                     </AvatarGroup>

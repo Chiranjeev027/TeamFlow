@@ -321,7 +321,7 @@ const TaskBoard: React.FC = () => {
     
     return totalCount;
  };
-  const isOwner = user && project && user.id.toString() === project.owner._id.toString();
+  const isOwner = user && project && user.id === project.owner._id;
   {import.meta.env.DEV && project && (
     <Alert severity="info" sx={{ mb: 2 }}>
         <Typography variant="body2">
