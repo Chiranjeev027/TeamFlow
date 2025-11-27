@@ -1,0 +1,55 @@
+# Node
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+package-lock.json
+pnpm-lock.yaml
+.vscode/
+.idea/
+
+# Build
+dist/
+build/
+
+# Vite
+/.vite/
+
+# Env
+.env
+
+# OS
+.DS_Store
+Thumbs.db
+
+# TypeScript
+*.tsbuildinfo
+
+# Logs
+logs/
+*.log
+
+# Misc
+coverage/
+coverage-final.json
+
+# Editor
+*.sublime-workspace
+*.sublime-project
+# JetBrains IDE
+.idea/
+
+# Ignore temporary files
+tmp/
+
+# Ignore compiled output - if you build backend
+backend/dist/
+
+# npm
+npm-debug.log
+
+# lock files
+package-lock.json
+
+# local npm cache
+.npm
