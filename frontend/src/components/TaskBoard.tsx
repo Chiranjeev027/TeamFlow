@@ -349,7 +349,7 @@ const TaskBoard: React.FC = () => {
   }
 
   return (
-    <Box>
+    <Box sx={{ width: '100%' }}>
       <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
         <Box>
           <Typography variant="h4">{project.name}</Typography>
