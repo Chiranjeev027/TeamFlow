@@ -33,7 +33,9 @@ const TaskColumn: React.FC<TaskColumnProps> = ({
       sx={{
         p: 2,
         minHeight: '100%',
-        backgroundColor: 'background.default'
+        backgroundColor: 'background.paper', // CHANGED: Use theme paper color
+        border: '1px solid',
+        borderColor: 'divider' // CHANGED: Use theme divider color
       }}
       onDragOver={onDragOver}
       onDrop={(e) => onDrop(e, status)}

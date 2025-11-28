@@ -19,40 +19,48 @@ interface ProjectPageProps {
 }
 
 const ProjectPage: React.FC<ProjectPageProps> = ({ toggleDarkMode, darkMode }) => {
-  useParams<{ projectId: string }>();
+  const { projectId } = useParams<{ projectId: string }>();
   const navigate = useNavigate();
   const { user, logout } = useAuth();
 
   return (
-    <Box sx={{ flexGrow: 1, minHeight: '100vh', backgroundColor: '#f8fafc', width: '100%' }}>
+    <Box sx={{ 
+      flexGrow: 1, 
+      minHeight: '100vh', 
+      width: '100%',
+      // REMOVE the hardcoded background color
+    }}>
       <AppBar position="static" elevation={1}>
         <Toolbar>
-            <IconButton
+          <IconButton
             edge="start"
             color="inherit"
             onClick={() => navigate('/')}
             sx={{ mr: 2 }}
-            >
+          >
             <ArrowBack />
-            </IconButton>
-            <IconButton onClick={toggleDarkMode} color="inherit" sx={{ mr: 1 }}>
+          </IconButton>
+          
+          {/* Dark Mode Toggle - Make sure this is included */}
+          <IconButton onClick={toggleDarkMode} color="inherit" sx={{ mr: 1 }}>
             {darkMode ? <Brightness7 /> : <Brightness4 />}
-            </IconButton>
-            <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
+          </IconButton>
+          
+          <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
             TeamFlow
-            </Typography>
-            <Typography variant="body1" sx={{ mr: 2 }}>
+          </Typography>
+          <Typography variant="body1" sx={{ mr: 2 }}>
             {user?.name}
-            </Typography>
-            <Button color="inherit" onClick={logout}>
+          </Typography>
+          <Button color="inherit" onClick={logout}>
             Logout
-            </Button>
+          </Button>
         </Toolbar>
-        </AppBar>
+      </AppBar>
       
-        <Box sx={{ p: 3, width: '100%', boxSizing: 'border-box' }}>
-            <TaskBoard />
-        </Box>
+      <Box sx={{ p: 3, width: '100%', boxSizing: 'border-box' }}>
+        <TaskBoard />
+      </Box>
     </Box>
   );
 };

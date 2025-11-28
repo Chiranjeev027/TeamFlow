@@ -61,7 +61,6 @@ function App() {
     },
   }), [darkMode]);
 
-  // Add this to your context or create a new context for theme
   const toggleDarkMode = () => {
     setDarkMode(!darkMode);
   };
@@ -79,5 +78,6 @@ function App() {
     </ThemeProvider>
   );
 }
+
 
 export default App;

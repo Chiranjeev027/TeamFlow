@@ -1,3 +1,4 @@
+// teamflow/frontend/src/components/UserPresence.tsx
 import React, { useState, useEffect } from 'react';
 import { Box, Typography, Avatar, AvatarGroup, Chip, Tooltip } from '@mui/material';
 import { useSocket } from '../context/SocketContext';
@@ -17,6 +18,8 @@ const UserPresence: React.FC<{ projectId: string }> = ({ projectId }) => {
 
   useEffect(() => {
     if (socket && user && projectId) {
+      console.log('🔌 Joining project room:', projectId, 'User:', user.name);
+      
       // Join project room and notify others
       socket.emit('user-joined', { 
         projectId, 
@@ -28,7 +31,13 @@ const UserPresence: React.FC<{ projectId: string }> = ({ projectId }) => {
       });
       
       // Listen for user presence updates
+      socket.on('online-users', (users: OnlineUser[]) => {
+        console.log('👥 Online users received:', users);
+        setOnlineUsers(users);
+      });
+
       socket.on('user-joined', (userData: OnlineUser) => {
+        console.log('✅ User joined:', userData.name);
         setOnlineUsers(prev => {
           const exists = prev.find(u => u.userId === userData.userId);
           return exists ? prev : [...prev, userData];
@@ -36,23 +45,32 @@ const UserPresence: React.FC<{ projectId: string }> = ({ projectId }) => {
       });
 
       socket.on('user-left', (userId: string) => {
+        console.log('❌ User left:', userId);
         setOnlineUsers(prev => prev.filter(u => u.userId !== userId));
       });
 
-      socket.on('online-users', (users: OnlineUser[]) => {
-        setOnlineUsers(users);
+      // Handle connection errors
+      socket.on('connect_error', (error) => {
+        console.error('🔌 Socket connection error:', error);
       });
     }
 
     return () => {
       if (socket && user) {
+        console.log('🚪 Leaving project room:', projectId);
         socket.emit('user-left', { projectId, userId: user.id });
+        socket.off('online-users');
         socket.off('user-joined');
         socket.off('user-left');
-        socket.off('online-users');
+        socket.off('connect_error');
       }
     };
   }, [socket, projectId, user]);
+
+  // Debug: Log current online users
+  useEffect(() => {
+    console.log('📊 Current online users:', onlineUsers);
+  }, [onlineUsers]);
 
   return (
     <Box sx={{ 
@@ -61,12 +79,13 @@ const UserPresence: React.FC<{ projectId: string }> = ({ projectId }) => {
       gap: 2, 
       mb: 3,
       p: 2,
-      backgroundColor: 'grey.50',
+      backgroundColor: 'background.paper',
       borderRadius: 2,
       border: '1px solid',
-      borderColor: 'grey.200'
+      borderColor: 'divider',
+      boxShadow: 1
     }}>
-      <Typography variant="body2" color="textSecondary" sx={{ fontWeight: 600 }}>
+      <Typography variant="body2" color="text.primary" sx={{ fontWeight: 600 }}>
         Online now:
       </Typography>
       <AvatarGroup max={6} sx={{ '& .MuiAvatar-root': { width: 32, height: 32, fontSize: '0.8rem' } }}>
@@ -84,8 +103,15 @@ const UserPresence: React.FC<{ projectId: string }> = ({ projectId }) => {
           </Tooltip>
         ))}
       </AvatarGroup>
+      
+      {/* Show meaningful status messages */}
+      {onlineUsers.length === 0 && (
+        <Typography variant="body2" color="text.secondary">
+          No one online
+        </Typography>
+      )}
       {onlineUsers.length === 1 && (
-        <Typography variant="body2" color="textSecondary">
+        <Typography variant="body2" color="text.secondary">
           You're the only one here
         </Typography>
       )}
@@ -94,6 +120,16 @@ const UserPresence: React.FC<{ projectId: string }> = ({ projectId }) => {
           label={`${onlineUsers.length} online`} 
           size="small" 
           color="primary"
+          variant="outlined"
+        />
+      )}
+      
+      {/* Debug info */}
+      {import.meta.env.DEV && (
+        <Chip 
+          label={`Socket: ${socket?.connected ? 'Connected' : 'Disconnected'}`}
+          size="small"
+          color={socket?.connected ? 'success' : 'error'}
           variant="outlined"
         />
       )}
