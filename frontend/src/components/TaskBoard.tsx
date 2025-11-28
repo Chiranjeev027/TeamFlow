@@ -33,7 +33,7 @@ interface Task {
   description: string;
   status: 'todo' | 'in-progress' | 'done';
   priority: 'low' | 'medium' | 'high';
-  assignee?: { _id: string; name: string; email: string };
+  assignee?: { _id: string; name: string; email: string; isOnline?: boolean };
   dueDate?: string;
   createdBy: string;
 }
@@ -235,14 +235,6 @@ const TaskBoard: React.FC = () => {
     updateTaskStatus(taskId, status);
   };
 
-  const getPriorityColor = (priority: string) => {
-    switch (priority) {
-      case 'high': return 'error';
-      case 'medium': return 'warning';
-      case 'low': return 'success';
-      default: return 'default';
-    }
-  };
 
   // Function to handle task deletion
   const deleteTask = async (taskId: string) => {
@@ -322,18 +314,6 @@ const TaskBoard: React.FC = () => {
  };
   const isOwner = user && project && user.id && project.owner && 
                     user.id.toString() === project.owner._id.toString();
-  {import.meta.env.DEV && project && (
-    <Alert severity="info" sx={{ mb: 2 }}>
-        <Typography variant="body2">
-        <strong>Ownership Debug:</strong><br/>
-        Current User ID: {user?.id}<br/>
-        Project Owner ID: {project.owner._id}<br/>
-        IDs Match: {user?.id === project.owner._id ? 'YES' : 'NO'}<br/>
-        User: {user?.name}<br/>
-        Owner: {project.owner.name}
-        </Typography>
-    </Alert>
- )}
     console.log('🔑 Ownership check:', { 
     userId: user?.id, 
     ownerId: project?.owner._id, 
@@ -472,85 +452,103 @@ const TaskBoard: React.FC = () => {
             {tasks
               .filter(task => task.status === column.id)
               .map((task) => (
+                // In TaskBoard.tsx - Replace the task card 
                 <Card
-                  key={task._id}
-                  sx={{ 
-                    mb: 2, 
-                    cursor: 'grab',
-                    '&:hover': {
-                      boxShadow: 3
-                    }
-                  }}
-                  draggable
-                  onDragStart={(e) => handleDragStart(e, task._id)}
-                >
-                  <CardContent>
-                    <Typography variant="h6" gutterBottom>
-                      {task.title}
-                    </Typography>
-                    <Typography variant="body2" color="textSecondary" paragraph>
-                      {task.description}
-                    </Typography>
-                    
-                    <Box display="flex" justifyContent="space-between" alignItems="center" mb={1}>
-                      <Chip 
-                        label={task.priority} 
-                        size="small" 
-                        color={getPriorityColor(task.priority) as any}
-                      />
-                      {/* Edit and Delete Buttons */}
-                      <Box>
-                        <IconButton 
-                          size="small" 
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setEditTask(task);
-                          }}
-                          sx={{ mr: 0.5 }}
-                        >
-                          <Edit fontSize="small" />
-                        </IconButton>
-                        <IconButton 
-                          size="small" 
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            if (window.confirm('Are you sure you want to delete this task?')) {
-                              deleteTask(task._id);
-                            }
-                          }}
-                        >
-                          <Delete fontSize="small" />
-                        </IconButton>
-                      </Box>
-                    </Box>
-                    
-                    <Box display="flex" justifyContent="space-between" alignItems="center">
-                      <Box display="flex" alignItems="center" gap={1}>
-                        <Avatar 
-                          sx={{ 
-                            width: 24, 
-                            height: 24, 
-                            fontSize: '0.8rem',
-                            bgcolor: task.assignee ? 'primary.main' : 'grey.400'
-                          }}
-                        >
-                          {task.assignee ? task.assignee.name.charAt(0).toUpperCase() : 'U'}
-                        </Avatar>
-                        <Typography variant="caption">
-                          {task.assignee?.name || 'Unassigned'}
-                        </Typography>
-                      </Box>
-                      
-                      {task.dueDate && (
-                        <Box display="flex" alignItems="center" gap={0.5}>
-                          <Schedule fontSize="small" color="action" />
-                          <Typography variant="caption">
-                            {new Date(task.dueDate).toLocaleDateString()}
-                          </Typography>
+                    key={task._id}
+                    sx={{ 
+                        mb: 2, 
+                        cursor: 'grab',
+                        borderLeft: `4px solid ${
+                        task.priority === 'high' ? '#ef4444' : 
+                        task.priority === 'medium' ? '#f59e0b' : '#10b981'
+                        }`,
+                        transition: 'all 0.2s ease',
+                        '&:hover': {
+                        transform: 'translateY(-2px)',
+                        boxShadow: '0 8px 25px rgba(0,0,0,0.15)',
+                        }
+                    }}
+                    draggable
+                    onDragStart={(e) => handleDragStart(e, task._id)}
+                    >
+                    <CardContent sx={{ p: 2, '&:last-child': { pb: 2 } }}>
+                        <Box display="flex" justifyContent="space-between" alignItems="flex-start" mb={1}>
+                            <Typography variant="h6" sx={{ fontSize: '1rem', fontWeight: 600, lineHeight: 1.3 }}>
+                                {task.title}
+                            </Typography>
+                            <Chip 
+                                label={task.priority} 
+                                size="small" 
+                                color={
+                                task.priority === 'high' ? 'error' : 
+                                task.priority === 'medium' ? 'warning' : 'success'
+                                }
+                                sx={{ fontWeight: 600, fontSize: '0.7rem' }}
+                            />
                         </Box>
-                      )}
-                    </Box>
-                  </CardContent>
+                        
+                        {task.description && (
+                            <Typography variant="body2" color="text.secondary" sx={{ mb: 2, lineHeight: 1.4 }}>
+                                {task.description}
+                            </Typography>
+                        )}
+
+                        <Box display="flex" justifyContent="space-between" alignItems="center">
+                            <Box display="flex" alignItems="center" gap={1}>
+                                <Avatar 
+                                sx={{ 
+                                    width: 28, 
+                                    height: 28, 
+                                    fontSize: '0.8rem',
+                                    bgcolor: task.assignee ? 'primary.main' : 'grey.300',
+                                    border: task.assignee?.isOnline ? '2px solid' : 'none',
+                                    borderColor: 'success.main'
+                                }}
+                                >
+                                {task.assignee ? task.assignee.name.charAt(0).toUpperCase() : 'U'}
+                                </Avatar>
+                                <Typography variant="caption" fontWeight="500">
+                                {task.assignee?.name || 'Unassigned'}
+                                </Typography>
+                            </Box>
+                        
+                            <Box display="flex" alignItems="center" gap={1}>
+                                {task.dueDate && (
+                                <Chip
+                                    icon={<Schedule fontSize="small" />}
+                                    label={new Date(task.dueDate).toLocaleDateString()}
+                                    size="small"
+                                    variant="outlined"
+                                    color={
+                                    new Date(task.dueDate) < new Date() ? 'error' : 
+                                    new Date(task.dueDate) < new Date(Date.now() + 2 * 24 * 60 * 60 * 1000) ? 'warning' : 'default'
+                                    }
+                                />
+                                )}
+                                <IconButton 
+                                size="small" 
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    setEditTask(task);
+                                }}
+                                >
+                                <Edit fontSize="small" />
+                                </IconButton>
+                                <IconButton
+                                  size="small"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    if (window.confirm('Are you sure you want to delete this task?')) {
+                                      deleteTask(task._id);
+                                    }
+                                  }}
+                                  color="error"
+                                >
+                                  <Delete fontSize="small" />
+                                </IconButton>
+                            </Box>
+                        </Box>
+                    </CardContent>
                 </Card>
               ))}
           </Paper>
