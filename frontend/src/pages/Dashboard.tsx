@@ -20,7 +20,8 @@ import {
   Card,
   CardContent,
   IconButton,
-  CircularProgress
+  CircularProgress,
+  AvatarGroup
 } from '@mui/material';
 import {
   Dashboard as DashboardIcon,
@@ -56,9 +57,15 @@ interface Project {
   createdAt: string;
 }
 
+interface TeamMember {
+  _id: string;
+  name: string;
+  email: string;
+  isOnline?: boolean;
+}
+
 const Dashboard: React.FC<DashboardProps> = ({ toggleDarkMode, darkMode }) => {
   const { user, logout } = useAuth();
-  // Dashboard doesn't directly store the projects list (ProjectList handles that). We only compute stats.
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState({
     totalProjects: 0,
@@ -66,46 +73,89 @@ const Dashboard: React.FC<DashboardProps> = ({ toggleDarkMode, darkMode }) => {
     activeProjects: 0,
     completedTasks: 0
   });
+  const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
+  const [onlineUsers, setOnlineUsers] = useState<TeamMember[]>([]);
 
-  const fetchProjects = async () => {
+  const fetchDashboardData = async () => {
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch('/api/projects', {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
+      
+      // Fetch projects to calculate stats
+      const projectsResponse = await fetch('/api/projects', {
+        headers: { 'Authorization': `Bearer ${token}` }
       });
       
-      if (!response.ok) throw new Error('Failed to fetch projects');
-      
-      const data = await response.json();
-      
-      // Calculate real statistics
-      const totalTeamMembers = data.reduce((acc: number, project: Project) => {
-        // Count unique members across all projects (excluding duplicates)
-        const projectMembers = new Set();
-        projectMembers.add(project.owner._id);
-        project.members.forEach((member: any) => projectMembers.add(member._id));
-        return acc + projectMembers.size;
-      }, 0);
+      if (!projectsResponse.ok) throw new Error('Failed to fetch projects');
+      const projects = await projectsResponse.json();
 
-      const activeProjects = data.length; // All projects are considered active for now
+      // Calculate unique team members across all projects
+      const allTeamMembers = new Map();
+      
+      projects.forEach((project: Project) => {
+        // Add owner
+        if (!allTeamMembers.has(project.owner._id)) {
+          allTeamMembers.set(project.owner._id, {
+            _id: project.owner._id,
+            name: project.owner.name,
+            email: project.owner.email
+          });
+        }
+        
+        // Add members
+        project.members.forEach((member: any) => {
+          if (!allTeamMembers.has(member._id)) {
+            allTeamMembers.set(member._id, {
+              _id: member._id,
+              name: member.name,
+              email: member.email
+            });
+          }
+        });
+      });
+
+      const uniqueTeamMembers = Array.from(allTeamMembers.values());
       
       setStats({
-        totalProjects: data.length,
-        totalTeamMembers,
-        activeProjects,
+        totalProjects: projects.length,
+        totalTeamMembers: uniqueTeamMembers.length,
+        activeProjects: projects.length, // All projects considered active for now
         completedTasks: 0 // We'll calculate this when we have task data
       });
+
+      setTeamMembers(uniqueTeamMembers);
+      
     } catch (error) {
-      console.error('Error fetching projects:', error);
+      console.error('Error fetching dashboard data:', error);
     } finally {
       setLoading(false);
     }
   };
 
+  // Fetch online users from all projects (you'll need to implement this endpoint)
+  const fetchOnlineUsers = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      // This would be a new endpoint that returns currently online users across user's projects
+      const response = await fetch('/api/users/online', {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      
+      if (response.ok) {
+        const onlineUsers = await response.json();
+        setOnlineUsers(onlineUsers);
+      }
+    } catch (error) {
+      console.error('Error fetching online users:', error);
+    }
+  };
+
   useEffect(() => {
-    fetchProjects();
+    fetchDashboardData();
+    fetchOnlineUsers();
+    
+    // Set up interval to refresh online users
+    const interval = setInterval(fetchOnlineUsers, 30000); // Every 30 seconds
+    return () => clearInterval(interval);
   }, []);
 
   const StatCard = ({ title, value, icon, color }: any) => (
@@ -143,6 +193,83 @@ const Dashboard: React.FC<DashboardProps> = ({ toggleDarkMode, darkMode }) => {
         </Box>
       </CardContent>
     </Card>
+  );
+
+  // Team Collaboration Widget - Shows real team members
+  const TeamCollaborationWidget = () => (
+    <Paper sx={{ 
+      p: 3, 
+      borderRadius: 3,
+      backgroundColor: 'background.paper'
+    }}>
+      <Typography variant="h6" fontWeight="600" gutterBottom>
+        Team Collaboration
+      </Typography>
+      
+      {/* Online Status */}
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
+        <Box sx={{ display: 'flex', alignItems: 'center' }}>
+          <Box sx={{ width: 8, height: 8, borderRadius: '50%', bgcolor: 'success.main', mr: 1 }} />
+          <Typography variant="body2">
+            {onlineUsers.length} of {teamMembers.length} online
+          </Typography>
+        </Box>
+      </Box>
+
+      {/* Team Members List */}
+      <Box sx={{ mb: 2 }}>
+        <Typography variant="subtitle2" color="text.secondary" gutterBottom>
+          Your Team
+        </Typography>
+        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+          {teamMembers.slice(0, 3).map((member) => (
+            <Box key={member._id} sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+              <Avatar 
+                sx={{ 
+                  width: 32, 
+                  height: 32, 
+                  fontSize: '0.8rem',
+                  bgcolor: member._id === user?.id ? 'primary.main' : 'secondary.main'
+                }}
+              >
+                {member.name.charAt(0).toUpperCase()}
+              </Avatar>
+              <Box sx={{ flexGrow: 1 }}>
+                <Typography variant="body2" fontWeight="500">
+                  {member.name} {member._id === user?.id && '(You)'}
+                </Typography>
+                <Typography variant="caption" color="text.secondary">
+                  {member.email}
+                </Typography>
+              </Box>
+              <Chip 
+                label={onlineUsers.some(u => u._id === member._id) ? "Online" : "Offline"} 
+                size="small" 
+                color={onlineUsers.some(u => u._id === member._id) ? "success" : "default"} 
+                variant="outlined"
+              />
+            </Box>
+          ))}
+          
+          {teamMembers.length > 3 && (
+            <Typography variant="caption" color="text.secondary" sx={{ textAlign: 'center', mt: 1 }}>
+              +{teamMembers.length - 3} more team members
+            </Typography>
+          )}
+        </Box>
+      </Box>
+
+      {/* Quick Team Actions */}
+      <Button 
+        variant="outlined" 
+        size="small" 
+        fullWidth 
+        startIcon={<Groups />}
+        onClick={() => {/* Navigate to team management */}}
+      >
+        Manage Team
+      </Button>
+    </Paper>
   );
 
   if (loading) {
@@ -221,8 +348,35 @@ const Dashboard: React.FC<DashboardProps> = ({ toggleDarkMode, darkMode }) => {
           ))}
         </List>
 
+        {/* Sidebar Team Status */}
         <Box sx={{ mt: 'auto', p: 2 }}>
           <Divider sx={{ borderColor: 'rgba(255, 255, 255, 0.2)', mb: 2 }} />
+          
+          {/* Team Online Status */}
+          <Box sx={{ mb: 2 }}>
+            <Typography variant="subtitle2" sx={{ color: 'white', opacity: 0.8, mb: 1 }}>
+              Team Online
+            </Typography>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              <AvatarGroup max={3} sx={{ '& .MuiAvatar-root': { width: 28, height: 28, fontSize: '0.8rem' } }}>
+                {teamMembers.slice(0, 3).map((member) => (
+                  <Avatar 
+                    key={member._id}
+                    sx={{ 
+                      bgcolor: onlineUsers.some(u => u._id === member._id) ? 'success.main' : 'grey.500'
+                    }}
+                  >
+                    {member.name.charAt(0).toUpperCase()}
+                  </Avatar>
+                ))}
+              </AvatarGroup>
+              <Typography variant="caption" sx={{ color: 'white', opacity: 0.7 }}>
+                {onlineUsers.length}/{teamMembers.length} online
+              </Typography>
+            </Box>
+          </Box>
+
+          {/* User Info and Logout */}
           <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
             <Avatar
               sx={{
@@ -340,7 +494,7 @@ const Dashboard: React.FC<DashboardProps> = ({ toggleDarkMode, darkMode }) => {
             {/* Projects Section - Takes 2/3 width on desktop */}
             <Box sx={{ 
               flex: { md: 2 }, 
-              minWidth: 0 // Important for flexbox shrinking
+              minWidth: 0
             }}>
               <Paper sx={{ 
                 p: 3, 
@@ -354,12 +508,11 @@ const Dashboard: React.FC<DashboardProps> = ({ toggleDarkMode, darkMode }) => {
                   <Button 
                     variant="contained" 
                     startIcon={<Add />}
-                    onClick={() => {/* You can add new project logic here */}}
                   >
                     New Project
                   </Button>
                 </Box>
-                <ProjectList onProjectCreated={fetchProjects} />
+                <ProjectList onProjectCreated={fetchDashboardData} />
               </Paper>
             </Box>
 
@@ -370,6 +523,9 @@ const Dashboard: React.FC<DashboardProps> = ({ toggleDarkMode, darkMode }) => {
               flexDirection: 'column',
               gap: 3
             }}>
+              {/* Team Collaboration Widget */}
+              <TeamCollaborationWidget />
+              
               {/* Quick Stats */}
               <Paper sx={{ 
                 p: 3, 
@@ -397,59 +553,11 @@ const Dashboard: React.FC<DashboardProps> = ({ toggleDarkMode, darkMode }) => {
                       Collaboration
                     </Typography>
                     <Chip 
-                      label={stats.totalTeamMembers > 1 ? "Active" : "Solo"} 
+                      label={stats.totalTeamMembers > 1 ? "Team" : "Solo"} 
                       color={stats.totalTeamMembers > 1 ? "success" : "warning"} 
                       size="small" 
                     />
                   </Box>
-                </Box>
-              </Paper>
-              
-              {/* Productivity */}
-              <Paper sx={{ 
-                p: 3, 
-                borderRadius: 3,
-                backgroundColor: 'background.paper',
-                textAlign: 'center'
-              }}>
-                <Typography variant="h6" fontWeight="600" gutterBottom>
-                  Workspace Health
-                </Typography>
-                <Box sx={{ py: 2 }}>
-                  <Box
-                    sx={{
-                      width: 120,
-                      height: 120,
-                      borderRadius: '50%',
-                      background: stats.totalProjects > 0 ? 
-                        'conic-gradient(#43e97b 60%, #e0e0e0 0)' : 
-                        'conic-gradient(#e0e0e0 100%)',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      margin: '0 auto',
-                      position: 'relative'
-                    }}
-                  >
-                    <Box
-                      sx={{
-                        width: 90,
-                        height: 90,
-                        borderRadius: '50%',
-                        backgroundColor: 'background.paper',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center'
-                      }}
-                    >
-                      <Typography variant="h5" fontWeight="700">
-                        {stats.totalProjects > 0 ? '60%' : '0%'}
-                      </Typography>
-                    </Box>
-                  </Box>
-                  <Typography variant="body2" color="text.secondary" sx={{ mt: 2 }}>
-                    {stats.totalProjects > 0 ? 'Active workspace' : 'No projects yet'}
-                  </Typography>
                 </Box>
               </Paper>
             </Box>
