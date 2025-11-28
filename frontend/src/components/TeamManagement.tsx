@@ -19,6 +19,7 @@ import {
   Typography,
   Alert,
   Divider,
+  CircularProgress,
   Switch,
   FormControlLabel
 } from '@mui/material';
@@ -229,15 +230,26 @@ const TeamManagement: React.FC<TeamManagementProps> = ({ projectId, open, onClos
                   helperText="User must have a TeamFlow account"
                 />
                 <Button
-                  type="submit"
-                  variant="contained"
-                  startIcon={<PersonAdd />}
-                  disabled={loading}
-                  sx={{ minWidth: '120px', mt: 1 }}
-                  color="primary"
-                >
-                  {loading ? 'Inviting...' : 'Invite'}
-                </Button>
+                    type="submit"
+                    variant="contained"
+                    startIcon={<PersonAdd />}
+                    disabled={loading}
+                    sx={{ 
+                        minWidth: '120px', 
+                        mt: 1,
+                        backgroundColor: 'white',
+                        color: 'primary.main',
+                        '&:hover': {
+                        backgroundColor: 'grey.100'
+                        }
+                    }}
+                    >
+                    {loading ? (
+                        <CircularProgress size={20} sx={{ color: 'primary.main' }} />
+                    ) : (
+                        'Invite'
+                    )}
+              </Button>
               </Box>
             </Box>
             <Divider sx={{ my: 2 }} />
