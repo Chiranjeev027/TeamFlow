@@ -3,12 +3,13 @@ import { useState, useEffect } from 'react';
 
 export const useDarkMode = () => {
   const [darkMode, setDarkMode] = useState(false);
+  const [mounted, setMounted] = useState(false);
 
-  // Initialize from localStorage on component mount
+  // Initialize from localStorage only on client side
   useEffect(() => {
     try {
       const stored = localStorage.getItem('teamflow-dark-mode');
-      if (stored) {
+      if (stored !== null) {
         setDarkMode(JSON.parse(stored));
       } else {
         // Check system preference if no stored value
@@ -19,16 +20,19 @@ export const useDarkMode = () => {
     } catch (error) {
       console.error('Error reading dark mode preference:', error);
     }
+    setMounted(true);
   }, []);
 
   // Save to localStorage when darkMode changes
   useEffect(() => {
-    localStorage.setItem('teamflow-dark-mode', JSON.stringify(darkMode));
-  }, [darkMode]);
+    if (mounted) {
+      localStorage.setItem('teamflow-dark-mode', JSON.stringify(darkMode));
+    }
+  }, [darkMode, mounted]);
 
   const toggleDarkMode = () => {
     setDarkMode(current => !current);
   };
 
-  return { darkMode, toggleDarkMode };
+  return { darkMode, toggleDarkMode, mounted };
 };
