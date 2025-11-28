@@ -37,4 +37,9 @@ const projectSchema = new Schema<IProject>({
   timestamps: true
 });
 
+// Indexes for performance
+projectSchema.index({ owner: 1 });
+projectSchema.index({ members: 1 });
+projectSchema.index({ createdAt: -1 });
+
 export default mongoose.model<IProject>('Project', projectSchema);

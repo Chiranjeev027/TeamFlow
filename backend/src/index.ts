@@ -5,6 +5,10 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import { createServer } from 'http';
 import { Server } from 'socket.io';
+import { securityMiddleware } from './middleware/security';
+import { apiLimiter } from './middleware/rateLimit';
+import { requestLogger } from './middleware/requestLogger';
+import { logger } from './utils/logger';
 
 // Import routes
 import authRoutes from './routes/auth';
@@ -23,8 +27,11 @@ const io = new Server(server, {
 });
 
 // Middleware
-app.use(cors());
+app.use(securityMiddleware);
+app.use(cors({ origin: process.env.CLIENT_URL || 'http://localhost:3000' }));
 app.use(express.json());
+app.use(requestLogger);
+app.use(apiLimiter);
 
 // MongoDB connection
 const MONGODB_URI = process.env.MONGODB_URI;
@@ -182,6 +189,33 @@ io.on('connection', (socket) => {
     console.log(`📁 User ${socket.id} left project ${projectId}`);
   });
 
+  // Typing indicators
+  socket.on('user-typing', ({ projectId, taskId, userId, userName }: { projectId: string; taskId?: string; userId: string; userName: string }) => {
+    socket.to(projectId).emit('user-typing', {
+      userId,
+      userName,
+      taskId,
+      isTyping: true
+    });
+  });
+
+  socket.on('user-stop-typing', ({ projectId, userId }: { projectId: string; userId: string }) => {
+    socket.to(projectId).emit('user-stop-typing', { userId });
+  });
+
+  // Task movement tracking
+  socket.on('task-moved', ({ projectId, taskId, fromStatus, toStatus, movedBy }: { projectId: string; taskId: string; fromStatus: string; toStatus: string; movedBy: string }) => {
+    const activity = {
+      type: 'task_moved',
+      taskId,
+      fromStatus,
+      toStatus,
+      movedBy,
+      timestamp: new Date().toISOString()
+    };
+    io.to(projectId).emit('task-activity', activity);
+  });
+
   // Add error handling
   socket.on('error', (error) => {
     console.error('🔌 Socket error:', error);
@@ -193,4 +227,27 @@ app.set('io', io);
 const PORT = process.env.PORT || 5000;
 server.listen(PORT, () => {
   console.log(`🚀 Server running on port ${PORT}`);
+});
+
+// Detailed health check
+app.get('/api/health/detailed', async (req, res) => {
+  const dbState = mongoose.connection.readyState === 1 ? 'Connected' : 'Disconnected';
+  let dbPing: any = 'Disconnected';
+  if (mongoose.connection && mongoose.connection.db) {
+    try {
+      dbPing = await mongoose.connection.db.admin().ping();
+    } catch (err: any) {
+      dbPing = { error: String(err.message || err) };
+    }
+  }
+
+  const health = {
+    status: 'OK',
+    timestamp: new Date().toISOString(),
+    uptime: process.uptime(),
+    memory: process.memoryUsage(),
+    database: dbState,
+    databaseStats: dbPing
+  };
+  res.json(health);
 });

@@ -197,4 +197,29 @@ router.get('/:projectId/members', protect, async (req: any, res) => {
   }
 });
 
+// Get project analytics
+router.get('/:id/analytics', protect, async (req: any, res) => {
+  try {
+    const project = await Project.findById(req.params.id);
+    if (!project) {
+      return res.status(404).json({ error: 'Project not found' });
+    }
+
+    const tasks = await Task.find({ project: project._id });
+    const analytics = {
+      totalTasks: tasks.length,
+      completedTasks: tasks.filter(task => task.status === 'done').length,
+      inProgressTasks: tasks.filter(task => task.status === 'in-progress').length,
+      todoTasks: tasks.filter(task => task.status === 'todo').length,
+      highPriorityTasks: tasks.filter(task => task.priority === 'high').length,
+      overdueTasks: tasks.filter(task => task.dueDate && new Date(task.dueDate) < new Date() && task.status !== 'done').length,
+      completionRate: tasks.length > 0 ? Math.round((tasks.filter(task => task.status === 'done').length / tasks.length) * 100) : 0
+    };
+
+    res.json(analytics);
+  } catch (error: any) {
+    res.status(500).json({ error: 'Server error: ' + error.message });
+  }
+});
+
 export default router;

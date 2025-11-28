@@ -33,4 +33,11 @@ const taskSchema = new Schema<ITask>({
   timestamps: true
 });
 
+// Indexes
+taskSchema.index({ project: 1, status: 1 });
+taskSchema.index({ assignee: 1 });
+taskSchema.index({ dueDate: 1 });
+taskSchema.index({ priority: 1 });
+taskSchema.index({ createdBy: 1 });
+
 export default mongoose.model<ITask>('Task', taskSchema);

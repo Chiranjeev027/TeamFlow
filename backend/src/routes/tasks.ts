@@ -131,4 +131,46 @@ router.delete('/:id', protect, async (req: any, res) => {
   }
 });
 
+// Bulk update tasks
+router.put('/bulk/update', protect, async (req: any, res) => {
+  try {
+    const { taskIds, updates } = req.body;
+    const result = await Task.updateMany(
+      { _id: { $in: taskIds } },
+      { $set: updates }
+    );
+    // Find updated tasks to populate and emit
+    const updatedTasks = await Task.find({ _id: { $in: taskIds } }).populate('assignee', 'name email');
+    const io = req.app.get('io');
+    updatedTasks.forEach((task: any) => {
+      io.to(task.project.toString()).emit('task-updated', task);
+    });
+    res.json({ message: 'Tasks updated successfully', count: result.modifiedCount ?? 0 });
+  } catch (error: any) {
+    res.status(500).json({ error: 'Server error: ' + error.message });
+  }
+});
+
+// Search tasks
+router.get('/search', protect, async (req: any, res) => {
+  try {
+    const { query, projectId, status, priority, assignee } = req.query;
+    let searchFilter: any = {};
+    if (projectId) searchFilter.project = projectId;
+    if (query) {
+      searchFilter.$or = [
+        { title: { $regex: query, $options: 'i' } },
+        { description: { $regex: query, $options: 'i' } }
+      ];
+    }
+    if (status) searchFilter.status = status;
+    if (priority) searchFilter.priority = priority;
+    if (assignee) searchFilter.assignee = assignee;
+    const tasks = await Task.find(searchFilter).populate('assignee', 'name email').populate('project', 'name').sort({ createdAt: -1 }).limit(50);
+    res.json(tasks);
+  } catch (error: any) {
+    res.status(500).json({ error: 'Server error: ' + error.message });
+  }
+});
+
 export default router;
