@@ -9,7 +9,6 @@ import {
   Dialog,
   TextField,
   CircularProgress,
-  Chip,
   Avatar,
   AvatarGroup,
   IconButton,

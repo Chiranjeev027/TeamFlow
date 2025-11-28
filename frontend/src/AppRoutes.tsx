@@ -1,3 +1,4 @@
+// teamflow/frontend/src/AppRoutes.tsx
 import React from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { useAuth } from './context/AuthContext';
@@ -5,7 +6,12 @@ import AuthPage from './pages/AuthPage';
 import Dashboard from './pages/Dashboard';
 import ProjectPage from './pages/ProjectPage';
 
-const AppRoutes: React.FC = () => {
+interface AppRoutesProps {
+  toggleDarkMode: () => void;
+  darkMode: boolean;
+}
+
+const AppRoutes: React.FC<AppRoutesProps> = ({ toggleDarkMode, darkMode }) => {
   const { user, loading } = useAuth();
 
   if (loading) {
@@ -20,11 +26,11 @@ const AppRoutes: React.FC = () => {
       />
       <Route 
         path="/" 
-        element={user ? <Dashboard /> : <Navigate to="/auth" />} 
+        element={user ? <Dashboard toggleDarkMode={toggleDarkMode} darkMode={darkMode} /> : <Navigate to="/auth" />} 
       />
       <Route 
         path="/project/:projectId" 
-        element={user ? <ProjectPage /> : <Navigate to="/auth" />} 
+        element={user ? <ProjectPage toggleDarkMode={toggleDarkMode} darkMode={darkMode} /> : <Navigate to="/auth" />} 
       />
       <Route path="*" element={<Navigate to="/" />} />
     </Routes>
