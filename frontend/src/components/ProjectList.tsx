@@ -1,18 +1,20 @@
 // teamflow/frontend/src/components/ProjectList.tsx
 import React, { useState, useEffect } from 'react';
-import {
-  Box,
-  Typography,
-  Card,
-  CardContent,
-  Button,
-  Dialog,
-  TextField,
-  CircularProgress,
-  Avatar,
-  AvatarGroup,
-  IconButton,
-  alpha
+import { 
+  Box, 
+  Typography, 
+  Card, 
+  CardContent, 
+  Button, 
+  Dialog, 
+  TextField, 
+  // CircularProgress replaced by Skeleton
+  Avatar, 
+  AvatarGroup, 
+  IconButton, 
+  LinearProgress, 
+  Skeleton,
+  alpha 
 } from '@mui/material';
 import { Add, MoreHoriz, People, CalendarToday } from '@mui/icons-material';
 import { useAuth } from '../context/AuthContext';
@@ -35,6 +37,7 @@ const ProjectList: React.FC<ProjectListProps> = ({ onProjectCreated }) => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [projects, setProjects] = useState<Project[]>([]);
+  const [projectProgress, setProjectProgress] = useState<Record<string, number>>({});
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(true);
   const [formData, setFormData] = useState({ name: '', description: '' });
@@ -52,6 +55,26 @@ const ProjectList: React.FC<ProjectListProps> = ({ onProjectCreated }) => {
       
       const data = await response.json();
       setProjects(data);
+      // compute progress for each project
+      const progressObj: Record<string, number> = {};
+      await Promise.all(data.map(async (project: Project) => {
+        try {
+          const token = localStorage.getItem('token');
+          const resp = await fetch(`/api/tasks/project/${project._id}`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+          });
+          if (!resp.ok) {
+            progressObj[project._id] = 0;
+            return;
+          }
+          const tasks = await resp.json();
+          const completed = tasks.filter((t: any) => t.status === 'done').length;
+          progressObj[project._id] = tasks.length === 0 ? 0 : Math.round((completed / tasks.length) * 100);
+        } catch (err) {
+          progressObj[project._id] = 0;
+        }
+      }));
+      setProjectProgress(progressObj);
     } catch (error) {
       console.error('Error fetching projects:', error);
     } finally {
@@ -103,8 +126,11 @@ const ProjectList: React.FC<ProjectListProps> = ({ onProjectCreated }) => {
 
   if (loading) {
     return (
-      <Box display="flex" justifyContent="center" alignItems="center" minHeight="400px">
-        <CircularProgress />
+      <Box display="flex" justifyContent="center" alignItems="center" minHeight="400px" sx={{ width: '100%' }}>
+        <Box sx={{ width: '100%' }}>
+          <Skeleton variant="rectangular" height={160} sx={{ borderRadius: 2, mb: 2 }} />
+          <Skeleton variant="rectangular" height={160} sx={{ borderRadius: 2, mb: 2 }} />
+        </Box>
       </Box>
     );
   }
@@ -262,6 +288,15 @@ const ProjectList: React.FC<ProjectListProps> = ({ onProjectCreated }) => {
                 >
                   {project.description || 'No description provided'}
                 </Typography>
+                {/* Project progress */}
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 1 }}>
+                  <Box sx={{ flex: 1 }}>
+                    <LinearProgress variant="determinate" value={projectProgress[project._id] || 0} sx={{ height: 8, borderRadius: 2 }} />
+                  </Box>
+                  <Typography variant="caption" color="text.secondary">
+                    {projectProgress[project._id] || 0}%
+                  </Typography>
+                </Box>
 
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>

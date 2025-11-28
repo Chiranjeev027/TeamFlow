@@ -68,7 +68,7 @@ const TeamManagement: React.FC<TeamManagementProps> = ({ projectId, open, onClos
       
       if (!response.ok) {
         const errorText = await response.text();
-        throw new Error('Failed to fetch team');
+        throw new Error(errorText || 'Failed to fetch team');
       }
       
       const data = await response.json();

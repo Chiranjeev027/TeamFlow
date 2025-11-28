@@ -1,12 +1,15 @@
 // teamflow/frontend/src/components/TaskBoard.tsx
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   Box,
   Typography,
   Button,
+  TextField,
   Dialog,
   Alert,
-  CircularProgress
+  // CircularProgress (replaced by Skeleton)
+  Skeleton,
+  Fab
 } from '@mui/material';
 import { Add, Groups } from '@mui/icons-material';
 import { useParams } from 'react-router-dom';
@@ -17,7 +20,6 @@ import UserPresence from './UserPresence';
 import TeamManagement from './TeamManagement';
 import TaskColumn from './TaskColumn';
 import TaskForm from './TaskForm';
-import TaskComments from './TaskComments'; 
 import type { Task, Project, TaskFormData } from '../types'; 
 
 const TaskBoard: React.FC = () => {
@@ -35,6 +37,9 @@ const TaskBoard: React.FC = () => {
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [teamDialogOpen, setTeamDialogOpen] = useState(false);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
+  const [filters, setFilters] = useState<{ myTasks?: boolean; highPriority?: boolean; overdue?: boolean; unassigned?: boolean }>({});
+  const [searchTerm, setSearchTerm] = useState('');
+  const searchRef = useRef<HTMLInputElement | null>(null);
 
   // Form state
   const [formData, setFormData] = useState<TaskFormData>({
@@ -108,6 +113,25 @@ const TaskBoard: React.FC = () => {
       }
     }
   }, [projectId, socket]);
+
+  // Keyboard shortcuts (global across TaskBoard)
+  useEffect(() => {
+    const handleKeyPress = (e: KeyboardEvent) => {
+      if (e.ctrlKey || e.metaKey) {
+        if (e.key === 'n') {
+          e.preventDefault();
+          setCreateDialogOpen(true);
+        }
+        if (e.key === 'f' || e.key === 'k') {
+          e.preventDefault();
+          searchRef.current?.focus();
+        }
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyPress);
+    return () => document.removeEventListener('keydown', handleKeyPress);
+  }, []);
 
   // Task operations
   const createTask = async (e: React.FormEvent) => {
@@ -239,9 +263,11 @@ const TaskBoard: React.FC = () => {
   // Loading and error states
   if (loading) {
     return (
-      <Box display="flex" justifyContent="center" alignItems="center" minHeight="400px" flexDirection="column">
-        <CircularProgress />
-        <Typography variant="body2" sx={{ mt: 2 }}>Loading project data...</Typography>
+      <Box display="flex" justifyContent="center" alignItems="center" minHeight="400px" flexDirection="column" gap={2}>
+        <Skeleton variant="rectangular" width="60%" height={40} sx={{ borderRadius: 1 }} />
+        <Box sx={{ display: 'flex', gap: 2, width: '100%', mt: 2 }}>
+          <Skeleton variant="rectangular" width="100%" height={400} sx={{ borderRadius: 2 }} />
+        </Box>
       </Box>
     );
   }
@@ -255,6 +281,7 @@ const TaskBoard: React.FC = () => {
   }
 
   return (
+    <>
     <Box sx={{ width: '100%' }}>
       {/* Header */}
       <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
@@ -283,8 +310,26 @@ const TaskBoard: React.FC = () => {
         </Box>
       </Box>
 
-      {/* User Presence */}
-      {projectId && <UserPresence projectId={projectId} />}
+      {/* User Presence & Quick Filters */}
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+          {projectId && <UserPresence projectId={projectId} />}
+          <Box sx={{ display: 'flex', gap: 1 }}>
+            <Button variant={filters.myTasks ? 'contained' : 'outlined'} onClick={() => setFilters(prev => ({ ...prev, myTasks: !prev.myTasks }))}>My Tasks</Button>
+            <Button variant={filters.highPriority ? 'contained' : 'outlined'} onClick={() => setFilters(prev => ({ ...prev, highPriority: !prev.highPriority }))}>High Priority</Button>
+            <Button variant={filters.overdue ? 'contained' : 'outlined'} onClick={() => setFilters(prev => ({ ...prev, overdue: !prev.overdue }))}>Overdue</Button>
+            <Button variant={filters.unassigned ? 'contained' : 'outlined'} onClick={() => setFilters(prev => ({ ...prev, unassigned: !prev.unassigned }))}>Unassigned</Button>
+          </Box>
+        </Box>
+        <TextField
+          inputRef={searchRef}
+          size="small"
+          placeholder="Search tasks..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          sx={{ width: { xs: '100%', sm: 320 } }}
+        />
+      </Box>
 
       {/* Alerts */}
       {getTeamCount() === 1 && (
@@ -309,7 +354,14 @@ const TaskBoard: React.FC = () => {
             <TaskColumn
               title={column.title}
               color={column.color}
-              tasks={tasks.filter(task => task.status === column.id)}
+              tasks={tasks
+                .filter(task => task.status === column.id)
+                .filter(task => !filters.myTasks || (task.assignee && task.assignee._id === user?.id))
+                .filter(task => !filters.highPriority || task.priority === 'high')
+                .filter(task => !filters.overdue || (task.dueDate && new Date(task.dueDate) < new Date()))
+                .filter(task => !filters.unassigned || !task.assignee)
+                .filter(task => !searchTerm || task.title.toLowerCase().includes(searchTerm.toLowerCase()) || task.description?.toLowerCase().includes(searchTerm.toLowerCase()))
+              }
               status={column.id as 'todo' | 'in-progress' | 'done'}
               onEditTask={openEditDialog}
               onDeleteTask={deleteTask}
@@ -359,6 +411,16 @@ const TaskBoard: React.FC = () => {
         onTeamUpdate={fetchProjectData}
       />
     </Box>
+      {/* Floating Add Task Button */}
+      <Fab
+        color="primary"
+        aria-label="add task"
+        sx={{ position: 'fixed', bottom: 24, right: 24 }}
+        onClick={() => setCreateDialogOpen(true)}
+      >
+        <Add />
+      </Fab>
+    </>
   );
 };
 

@@ -29,6 +29,35 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onEdit, onDelete }) => {
     return 'default';
   };
 
+  const getDueDateStatus = (dueDate?: string) => {
+    if (!dueDate) return null;
+    const due = new Date(dueDate);
+    const today = new Date();
+    // normalize times
+    const startOfToday = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+    const diffDays = Math.ceil((due.getTime() - startOfToday.getTime()) / (1000 * 60 * 60 * 24));
+    if (diffDays < 0) return { status: 'overdue', text: 'Overdue' };
+    if (diffDays === 0) return { status: 'today', text: 'Due today' };
+    if (diffDays <= 2) return { status: 'soon', text: 'Due soon' };
+    return null;
+  };
+
+  
+
+  const dueDateStatus = getDueDateStatus(task.dueDate);
+
+  const escapeHtml = (unsafe: string) => {
+    return unsafe.replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;');
+  }
+
+  const formatDescription = (text: string) => {
+    const escaped = escapeHtml(text);
+    return escaped
+      .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+      .replace(/\*(.*?)\*/g, '<em>$1</em>')
+      .replace(/\n/g, '<br/>');
+  }
+
   return (
     <Card
       sx={{ 
@@ -58,12 +87,24 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onEdit, onDelete }) => {
               color: 'white'
             }}
           />
+          {dueDateStatus && (
+            <Chip
+              label={dueDateStatus.text}
+              size="small"
+              variant="filled"
+              color={dueDateStatus.status === 'overdue' ? 'error' : 'warning'}
+              sx={{ fontWeight: 600, fontSize: '0.7rem', ml: 1 }}
+            />
+          )}
         </Box>
         
         {task.description && (
-          <Typography variant="body2" color="text.secondary" sx={{ mb: 2, lineHeight: 1.4 }}>
-            {task.description}
-          </Typography>
+          <Typography
+            variant="body2"
+            color="text.secondary"
+            sx={{ mb: 2, lineHeight: 1.4 }}
+            dangerouslySetInnerHTML={{ __html: formatDescription(task.description) }}
+          />
         )}
 
         <Box display="flex" justifyContent="space-between" alignItems="center">

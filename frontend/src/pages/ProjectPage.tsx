@@ -9,9 +9,10 @@ import {
   Button,
   IconButton
 } from '@mui/material';
-import { ArrowBack, Brightness4, Brightness7 } from '@mui/icons-material';
+import { ArrowBack, Brightness4, Brightness7, FileDownload } from '@mui/icons-material';
 import { useAuth } from '../context/AuthContext';
 import TaskBoard from '../components/TaskBoard';
+import ActivityFeed from '../components/ActivityFeed';
 
 interface ProjectPageProps {
   toggleDarkMode?: () => void;
@@ -19,7 +20,7 @@ interface ProjectPageProps {
 }
 
 const ProjectPage: React.FC<ProjectPageProps> = ({ toggleDarkMode, darkMode }) => {
-  const { projectId } = useParams<{ projectId: string }>();
+  const { projectId: _projectId } = useParams<{ projectId: string }>();
   const navigate = useNavigate();
   const { user, logout } = useAuth();
 
@@ -55,11 +56,35 @@ const ProjectPage: React.FC<ProjectPageProps> = ({ toggleDarkMode, darkMode }) =
           <Button color="inherit" onClick={logout}>
             Logout
           </Button>
+          <Button color="inherit" startIcon={<FileDownload />} onClick={async () => {
+            // export project data (project details & tasks)
+            const token = localStorage.getItem('token');
+            const [projectRes, tasksRes] = await Promise.all([
+              fetch(`/api/projects/${_projectId}`, { headers: { Authorization: `Bearer ${token}` } }),
+              fetch(`/api/tasks/project/${_projectId}`, { headers: { Authorization: `Bearer ${token}` } })
+            ]);
+            const projectData = projectRes.ok ? await projectRes.json() : null;
+            const tasksData = tasksRes.ok ? await tasksRes.json() : [];
+            const data = { project: projectData, tasks: tasksData, exportedAt: new Date().toISOString() };
+            const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `${projectData?.project?.name || 'project'}-export.json`;
+            a.click();
+          }}>
+            Export
+          </Button>
         </Toolbar>
       </AppBar>
       
-      <Box sx={{ p: 3, width: '100%', boxSizing: 'border-box' }}>
-        <TaskBoard />
+      <Box sx={{ p: 3, width: '100%', boxSizing: 'border-box', display: 'grid', gridTemplateColumns: { xs: '1fr', md: '3fr 1fr' }, gap: 3 }}>
+        <Box>
+          <TaskBoard />
+        </Box>
+        <Box>
+          <ActivityFeed projectId={_projectId!} />
+        </Box>
       </Box>
     </Box>
   );

@@ -40,12 +40,40 @@ const TaskForm: React.FC<TaskFormProps> = ({
   onFormDataChange,
   mode
 }) => {
+  const taskTemplates = [
+    { title: 'Bug Report', description: '**Steps to reproduce:**\n1. \n2. \n3. \n\n**Expected behavior:**\n\n**Actual behavior:**' },
+    { title: 'Feature Request', description: '**User story:**\nAs a [user], I want to [action] so that [benefit].\n\n**Acceptance criteria:**\n- [ ] \n- [ ]' },
+    { title: 'Design Review', description: '**Design link:**\n\n**Feedback:**\n\n**Action items:**' }
+  ];
+
+  const applyTemplate = (index: number | '') => {
+    if (index === '') return;
+    const template = taskTemplates[index as number];
+    onFormDataChange('title', template.title);
+    onFormDataChange('description', template.description);
+  };
+
   return (
     <Box component="form" onSubmit={onSubmit} p={3}>
       <Typography variant="h5" gutterBottom>
         {mode === 'create' ? 'Create New Task' : 'Edit Task'}
       </Typography>
-      
+
+      {/* Template Selector */}
+      <FormControl fullWidth margin="normal">
+        <InputLabel>Use Template</InputLabel>
+        <Select
+          value=""
+          label="Use Template"
+          onChange={(e) => applyTemplate(Number(e.target.value))}
+        >
+          <MenuItem value="">No template</MenuItem>
+          {taskTemplates.map((t, i) => (
+            <MenuItem key={i} value={i}>{t.title}</MenuItem>
+          ))}
+        </Select>
+      </FormControl>
+
       <TextField
         fullWidth
         label="Task Title"
@@ -54,7 +82,7 @@ const TaskForm: React.FC<TaskFormProps> = ({
         margin="normal"
         required
       />
-      
+
       <TextField
         fullWidth
         label="Description"
@@ -64,7 +92,7 @@ const TaskForm: React.FC<TaskFormProps> = ({
         multiline
         rows={3}
       />
-      
+
       <FormControl fullWidth margin="normal">
         <InputLabel>Status</InputLabel>
         <Select
@@ -77,7 +105,7 @@ const TaskForm: React.FC<TaskFormProps> = ({
           <MenuItem value="done">Done</MenuItem>
         </Select>
       </FormControl>
-      
+
       <FormControl fullWidth margin="normal">
         <InputLabel>Priority</InputLabel>
         <Select
@@ -90,7 +118,7 @@ const TaskForm: React.FC<TaskFormProps> = ({
           <MenuItem value="high">High</MenuItem>
         </Select>
       </FormControl>
-      
+
       <FormControl fullWidth margin="normal">
         <InputLabel>Assign to Team Member</InputLabel>
         <Select
@@ -123,7 +151,7 @@ const TaskForm: React.FC<TaskFormProps> = ({
           ))}
         </Select>
       </FormControl>
-      
+
       <TextField
         fullWidth
         label="Due Date"
@@ -137,7 +165,7 @@ const TaskForm: React.FC<TaskFormProps> = ({
       {mode === 'edit' && task && (
         <TaskComments taskId={task._id} />
       )}
-      
+
       <Box mt={3} display="flex" gap={1} justifyContent="flex-end">
         <Button onClick={onCancel}>Cancel</Button>
         <Button type="submit" variant="contained">
@@ -149,3 +177,4 @@ const TaskForm: React.FC<TaskFormProps> = ({
 };
 
 export default TaskForm;
+
