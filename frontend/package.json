@@ -19,6 +19,8 @@
     "react-dom": "^19.2.0",
     "react-router-dom": "^6.30.2",
     "socket.io-client": "^4.8.1"
+    ,"marked": "^5.1.0",
+    "dompurify": "^3.1.0"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.1",

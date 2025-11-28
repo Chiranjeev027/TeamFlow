@@ -2,6 +2,8 @@
 import express from 'express';
 import Project, { IProjectPopulated } from '../models/Project';
 import Task from '../models/Task';
+import { computeAnalyticsFromTasks } from '../utils/analytics';
+import mongoose from 'mongoose';
 import { protect } from '../middleware/auth';
 import User from '../models/User';
 
@@ -22,6 +24,8 @@ router.get('/', protect, async (req: any, res) => {
     res.status(500).json({ error: 'Server error: ' + error.message });
   }
 });
+
+export default router;
 
 // Create a new project
 router.post('/', protect, async (req: any, res) => {
@@ -204,22 +208,123 @@ router.get('/:id/analytics', protect, async (req: any, res) => {
     if (!project) {
       return res.status(404).json({ error: 'Project not found' });
     }
+    // Check if user has access
+    const isMember = project.members && project.members.some((m: any) => m.toString() === req.user.id);
+    const isOwner = project.owner && project.owner.toString() === req.user.id;
+    if (!isMember && !isOwner) {
+      return res.status(403).json({ error: 'Access denied' });
+    }
+    const now = new Date();
 
+    const agg = await Task.aggregate([
+      { $match: { project: new mongoose.Types.ObjectId(project._id) } },
+      {
+        $group: {
+          _id: null,
+          totalTasks: { $sum: 1 },
+          completedTasks: { $sum: { $cond: [{ $eq: ['$status', 'done'] }, 1, 0] } },
+          inProgressTasks: { $sum: { $cond: [{ $eq: ['$status', 'in-progress'] }, 1, 0] } },
+          todoTasks: { $sum: { $cond: [{ $eq: ['$status', 'todo'] }, 1, 0] } },
+          highPriorityTasks: { $sum: { $cond: [{ $eq: ['$priority', 'high'] }, 1, 0] } },
+          overdueTasks: { $sum: { $cond: [ { $and: [ { $gt: ['$dueDate', null] }, { $lt: ['$dueDate', now] }, { $ne: ['$status', 'done'] } ] }, 1, 0 ] } }
+        }
+      }
+    ]);
+
+    if (agg && agg.length > 0) {
+      const stats = agg[0];
+      const completionRate = stats.totalTasks > 0 ? Math.round((stats.completedTasks / stats.totalTasks) * 100) : 0;
+      const analytics = {
+        totalTasks: stats.totalTasks,
+        completedTasks: stats.completedTasks,
+        inProgressTasks: stats.inProgressTasks,
+        todoTasks: stats.todoTasks,
+        highPriorityTasks: stats.highPriorityTasks,
+        overdueTasks: stats.overdueTasks,
+        completionRate
+      };
+      return res.json(analytics);
+    }
+
+    // Fallback: compute analytics from raw task docs
     const tasks = await Task.find({ project: project._id });
-    const analytics = {
-      totalTasks: tasks.length,
-      completedTasks: tasks.filter(task => task.status === 'done').length,
-      inProgressTasks: tasks.filter(task => task.status === 'in-progress').length,
-      todoTasks: tasks.filter(task => task.status === 'todo').length,
-      highPriorityTasks: tasks.filter(task => task.priority === 'high').length,
-      overdueTasks: tasks.filter(task => task.dueDate && new Date(task.dueDate) < new Date() && task.status !== 'done').length,
-      completionRate: tasks.length > 0 ? Math.round((tasks.filter(task => task.status === 'done').length / tasks.length) * 100) : 0
-    };
-
-    res.json(analytics);
+    const fallbackAnalytics = computeAnalyticsFromTasks(tasks as any[]);
+    return res.json(fallbackAnalytics);
   } catch (error: any) {
     res.status(500).json({ error: 'Server error: ' + error.message });
   }
 });
 
-export default router;
+// export default router removed from here to add it at the end of the file
+
+// Batch analytics for multiple projects
+// POST /api/projects/analytics/batch
+router.post('/analytics/batch', protect, async (req: any, res) => {
+  try {
+    const { projectIds } = req.body;
+    if (!Array.isArray(projectIds) || projectIds.length === 0) {
+      return res.status(400).json({ error: 'projectIds must be a non-empty array' });
+    }
+
+    const objectIds = projectIds.map((id: string) => new mongoose.Types.ObjectId(id));
+    const now = new Date();
+
+    // Ensure current user has access to the requested projects
+    const allowedProjects = await Project.find({ _id: { $in: objectIds }, $or: [ { owner: req.user.id }, { members: req.user.id } ] }, '_id');
+    const allowedIdsSet = new Set(allowedProjects.map(p => p._id.toString()));
+
+    const allowedObjectIds = allowedProjects.map(p => p._id);
+
+    const agg = await Task.aggregate([
+      { $match: { project: { $in: allowedObjectIds } } },
+      {
+        $group: {
+          _id: '$project',
+          totalTasks: { $sum: 1 },
+          completedTasks: { $sum: { $cond: [{ $eq: ['$status', 'done'] }, 1, 0] } },
+          inProgressTasks: { $sum: { $cond: [{ $eq: ['$status', 'in-progress'] }, 1, 0] } },
+          todoTasks: { $sum: { $cond: [{ $eq: ['$status', 'todo'] }, 1, 0] } },
+          highPriorityTasks: { $sum: { $cond: [{ $eq: ['$priority', 'high'] }, 1, 0] } },
+          overdueTasks: { $sum: { $cond: [ { $and: [ { $gt: ['$dueDate', null] }, { $lt: ['$dueDate', now] }, { $ne: ['$status', 'done'] } ] }, 1, 0 ] } }
+        }
+      }
+    ]);
+
+    // Build map of projectId => stats
+    const resultsMap: Record<string, any> = {};
+    for (const item of agg) {
+      const total = item.totalTasks || 0;
+      const completed = item.completedTasks || 0;
+      const completionRate = total > 0 ? Math.round((completed / total) * 100) : 0;
+      resultsMap[item._id.toString()] = {
+        totalTasks: item.totalTasks || 0,
+        completedTasks: item.completedTasks || 0,
+        inProgressTasks: item.inProgressTasks || 0,
+        todoTasks: item.todoTasks || 0,
+        highPriorityTasks: item.highPriorityTasks || 0,
+        overdueTasks: item.overdueTasks || 0,
+        completionRate
+      };
+    }
+
+    // Ensure all requested projectIds exist with zeros if no tasks or not allowed
+    for (const pid of projectIds) {
+      if (!resultsMap[pid]) {
+        resultsMap[pid] = {
+          totalTasks: 0,
+          completedTasks: 0,
+          inProgressTasks: 0,
+          todoTasks: 0,
+          highPriorityTasks: 0,
+          overdueTasks: 0,
+          completionRate: 0
+        };
+      }
+    }
+
+    res.json(resultsMap);
+  } catch (error: any) {
+    console.error('Error in batch analytics:', error);
+    res.status(500).json({ error: 'Server error: ' + error.message });
+  }
+});

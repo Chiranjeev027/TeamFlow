@@ -43,6 +43,11 @@ export default defineConfig([
 ])
 ```
 
+## Backend Analytics Usage (Project Progress)
+
+- The frontend now uses a server-side analytics endpoint to compute project progress and other metrics.
+- The new endpoint is: POST `/api/projects/analytics/batch` which accepts an array of project IDs and returns a map of analytics objects for each project. This reduces network overhead compared to fetching tasks per project.
+
 You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
 
 ```js

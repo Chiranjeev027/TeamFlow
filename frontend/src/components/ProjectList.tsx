@@ -14,7 +14,8 @@ import {
   IconButton, 
   LinearProgress, 
   Skeleton,
-  alpha 
+  alpha,
+  Chip
 } from '@mui/material';
 import { Add, MoreHoriz, People, CalendarToday } from '@mui/icons-material';
 import { useAuth } from '../context/AuthContext';
@@ -33,11 +34,22 @@ interface ProjectListProps {
   onProjectCreated?: () => void;
 }
 
+interface ProjectAnalytics {
+  totalTasks: number;
+  completedTasks: number;
+  inProgressTasks: number;
+  todoTasks: number;
+  highPriorityTasks: number;
+  overdueTasks: number;
+  completionRate: number;
+}
+
 const ProjectList: React.FC<ProjectListProps> = ({ onProjectCreated }) => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [projects, setProjects] = useState<Project[]>([]);
   const [projectProgress, setProjectProgress] = useState<Record<string, number>>({});
+  const [projectAnalytics, setProjectAnalytics] = useState<Record<string, ProjectAnalytics>>({});
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(true);
   const [formData, setFormData] = useState({ name: '', description: '' });
@@ -55,25 +67,31 @@ const ProjectList: React.FC<ProjectListProps> = ({ onProjectCreated }) => {
       
       const data = await response.json();
       setProjects(data);
-      // compute progress for each project
+      // compute progress for each project (batch request)
       const progressObj: Record<string, number> = {};
-      await Promise.all(data.map(async (project: Project) => {
-        try {
-          const token = localStorage.getItem('token');
-          const resp = await fetch(`/api/tasks/project/${project._id}`, {
-            headers: { 'Authorization': `Bearer ${token}` }
-          });
-          if (!resp.ok) {
-            progressObj[project._id] = 0;
-            return;
-          }
-          const tasks = await resp.json();
-          const completed = tasks.filter((t: any) => t.status === 'done').length;
-          progressObj[project._id] = tasks.length === 0 ? 0 : Math.round((completed / tasks.length) * 100);
-        } catch (err) {
-          progressObj[project._id] = 0;
+      try {
+        const ids = data.map((p: Project) => p._id);
+        const token = localStorage.getItem('token');
+        const resp = await fetch('/api/projects/analytics/batch', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+          body: JSON.stringify({ projectIds: ids })
+        });
+
+        if (resp.ok) {
+            const analyticsMap = await resp.json();
+            for (const id of ids) {
+              progressObj[id] = analyticsMap[id]?.completionRate || 0;
+            }
+            setProjectAnalytics(analyticsMap);
+          } else {
+          // If batch fails, fall back to zero progress for all
+          ids.forEach((id: string) => { progressObj[id] = 0; });
         }
-      }));
+      } catch (err) {
+        data.forEach((p: Project) => { progressObj[p._id] = 0; });
+        setProjectAnalytics({});
+      }
       setProjectProgress(progressObj);
     } catch (error) {
       console.error('Error fetching projects:', error);
@@ -315,6 +333,15 @@ const ProjectList: React.FC<ProjectListProps> = ({ onProjectCreated }) => {
                       <Typography variant="caption" color="grey.500">
                         +{project.members.length - 3}
                       </Typography>
+                    )}
+                  </Box>
+                  {/* Overdue / high priority indicators */}
+                  <Box sx={{ display: 'flex', gap: 1, mt: 1 }}>
+                    {projectAnalytics[project._id]?.overdueTasks > 0 && (
+                      <Chip size="small" color="error" label={`Overdue: ${projectAnalytics[project._id].overdueTasks}`} />
+                    )}
+                    {projectAnalytics[project._id]?.highPriorityTasks > 0 && (
+                      <Chip size="small" color="warning" label={`High: ${projectAnalytics[project._id].highPriorityTasks}`} />
                     )}
                   </Box>
 

@@ -14,6 +14,7 @@ import { logger } from './utils/logger';
 import authRoutes from './routes/auth';
 import projectRoutes from './routes/projects';
 import taskRoutes from './routes/tasks';
+import usersRoutes from './routes/users';
 
 dotenv.config();
 
@@ -57,6 +58,7 @@ mongoose.connect(MONGODB_URI, {
 app.use('/api/auth', authRoutes);
 app.use('/api/projects', projectRoutes);
 app.use('/api/tasks', taskRoutes);
+app.use('/api/users', usersRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => {
@@ -223,6 +225,8 @@ io.on('connection', (socket) => {
 });
 
 app.set('io', io);
+// Expose projectUsers map to express app for routes to access
+app.set('projectUsers', projectUsers);
 
 const PORT = process.env.PORT || 5000;
 server.listen(PORT, () => {
