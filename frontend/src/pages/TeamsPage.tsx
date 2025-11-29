@@ -1,27 +1,12 @@
 // teamflow/frontend/src/pages/TeamsPage.tsx
 import React, { useState, useEffect } from 'react';
 import {
-  Box,
-  Typography,
-  Card,
-  CardContent,
-  Button,
-  Avatar,
-  AvatarGroup,
-  Chip,
-  Tabs,
-  Tab,
-  Paper
-} from '@mui/material';
-import {
-  Groups,
-  PersonAdd,
-  Wifi,
-  WifiOff,
-  AdminPanelSettings,
-  Engineering
-} from '@mui/icons-material';
-// auth hook not needed here
+  FiUsers,
+  FiUserPlus,
+  FiWifi,
+  FiShield,
+  FiTool
+} from 'react-icons/fi';
 import TeamMembersList from '../components/TeamMemberList';
 import InviteMemberDialog from '../components/InviteMemberDialog';
 import TeamPerformance from '../components/TeamPerformance';
@@ -101,144 +86,132 @@ const TeamsPage: React.FC = () => {
   const adminCount = teamMembers.filter(member => member.role === 'admin').length;
 
   return (
-    <Box sx={{ p: 3 }}>
+    <div className="p-6">
       {/* Header */}
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 4 }}>
-        <Box>
-          <Typography variant="h4" gutterBottom>
-            <Groups sx={{ verticalAlign: 'middle', mr: 2, fontSize: 32 }} />
+      <div className="flex justify-between items-center mb-8">
+        <div>
+          <h1 className="text-3xl font-bold mb-2 flex items-center gap-3">
+            <FiUsers className="text-primary-500" />
             Team Management
-          </Typography>
-          <Typography variant="body1" color="text.secondary">
+          </h1>
+          <p className="text-gray-600 dark:text-gray-400">
             Manage your team members, roles, and collaboration
-          </Typography>
-        </Box>
-        <Button
-          variant="contained"
-          startIcon={<PersonAdd />}
+          </p>
+        </div>
+        <button
           onClick={() => setInviteDialogOpen(true)}
-          size="large"
+          className="btn-primary flex items-center gap-2"
         >
-          Invite Team Members
-        </Button>
-      </Box>
+          <FiUserPlus /> Invite Team Members
+        </button>
+      </div>
 
       {/* Quick Stats */}
-      <Box sx={{ 
-        display: 'flex', 
-        gap: 3, 
-        mb: 4, 
-        flexDirection: { xs: 'column', sm: 'row' },
-        flexWrap: 'wrap'
-        }}>
-        <Card sx={{ flex: 1, minWidth: { xs: 'auto', sm: 200 } }}>
-            <CardContent>
-            <Typography color="text.secondary" gutterBottom>
-                Total Team Members
-            </Typography>
-            <Typography variant="h4" component="div">
-                {teamMembers.length}
-            </Typography>
-            <Box sx={{ display: 'flex', alignItems: 'center', mt: 1 }}>
-                <Wifi color="success" sx={{ fontSize: 16, mr: 1 }} />
-                <Typography variant="body2" color="success.main">
-                {onlineCount} online
-                </Typography>
-            </Box>
-            </CardContent>
-        </Card>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <div className="card p-6">
+          <p className="text-gray-600 dark:text-gray-400 mb-2">
+            Total Team Members
+          </p>
+          <h3 className="text-4xl font-bold mb-2">
+            {teamMembers.length}
+          </h3>
+          <div className="flex items-center gap-2 text-green-600 dark:text-green-400">
+            <FiWifi className="w-4 h-4" />
+            <span className="text-sm">{onlineCount} online</span>
+          </div>
+        </div>
 
-        <Card sx={{ flex: 1, minWidth: { xs: 'auto', sm: 200 } }}>
-            <CardContent>
-                <Typography color="text.secondary" gutterBottom>
-                    Team Admins
-                </Typography>
-                <Typography variant="h4" component="div">
-                    {adminCount}
-                </Typography>
-                <AdminPanelSettings color="primary" sx={{ mt: 1 }} />
-            </CardContent>
-        </Card>
+        <div className="card p-6">
+          <p className="text-gray-600 dark:text-gray-400 mb-2">
+            Team Admins
+          </p>
+          <h3 className="text-4xl font-bold mb-2">
+            {adminCount}
+          </h3>
+          <FiShield className="text-primary-500 w-6 h-6 mt-2" />
+        </div>
 
-        <Card sx={{ flex: 1, minWidth: { xs: 'auto', sm: 200 } }}>
-            <CardContent>
-                <Typography color="text.secondary" gutterBottom>
-                    Active Projects
-                </Typography>
-                <Typography variant="h4" component="div">
-                    {teamMembers.reduce((acc, member) => acc + member.projects, 0)}
-                </Typography>
-                <Engineering color="secondary" sx={{ mt: 1 }} />
-            </CardContent>
-        </Card>
+        <div className="card p-6">
+          <p className="text-gray-600 dark:text-gray-400 mb-2">
+            Active Projects
+          </p>
+          <h3 className="text-4xl font-bold mb-2">
+            {teamMembers.reduce((acc, member) => acc + member.projects, 0)}
+          </h3>
+          <FiTool className="text-secondary-500 w-6 h-6 mt-2" />
+        </div>
 
-        <Card sx={{ flex: 1, minWidth: { xs: 'auto', sm: 200 } }}>
-            <CardContent>
-                <Typography color="text.secondary" gutterBottom>
-                    Tasks Completed
-                </Typography>
-                <Typography variant="h4" component="div">
-                    {teamMembers.reduce((acc, member) => acc + member.tasksCompleted, 0)}
-                </Typography>
-                <Typography variant="body2" color="success.main" sx={{ mt: 1 }}>
-                    +12% this week
-                </Typography>
-            </CardContent>
-        </Card>
-      </Box>
+        <div className="card p-6">
+          <p className="text-gray-600 dark:text-gray-400 mb-2">
+            Tasks Completed
+          </p>
+          <h3 className="text-4xl font-bold mb-2">
+            {teamMembers.reduce((acc, member) => acc + member.tasksCompleted, 0)}
+          </h3>
+          <p className="text-sm text-green-600 dark:text-green-400 mt-2">
+            +12% this week
+          </p>
+        </div>
+      </div>
 
       {/* Team Overview */}
-      <Paper sx={{ p: 3, mb: 3 }}>
-        <Typography variant="h6" gutterBottom>
+      <div className="card p-6 mb-6">
+        <h2 className="text-xl font-semibold mb-4">
           Team Overview
-        </Typography>
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
-          <AvatarGroup max={6}>
+        </h2>
+        <div className="flex items-center gap-4 mb-4">
+          <div className="flex -space-x-2">
             {teamMembers.map((member) => (
-              <Avatar 
+              <div
                 key={member._id}
-                alt={member.name}
-                sx={{ 
-                  border: member.isOnline ? '2px solid' : 'none',
-                  borderColor: 'success.main'
-                }}
+                className={`w-10 h-10 rounded-full flex items-center justify-center text-white font-semibold ${
+                  member.isOnline
+                    ? 'bg-green-500 ring-2 ring-green-400'
+                    : 'bg-gray-500'
+                }`}
+                title={member.name}
               >
                 {member.name.charAt(0)}
-              </Avatar>
+              </div>
             ))}
-          </AvatarGroup>
-          <Box>
-            <Typography variant="body2" color="text.secondary">
+          </div>
+          <div>
+            <p className="text-sm text-gray-600 dark:text-gray-400">
               Team Members
-            </Typography>
-            <Box sx={{ display: 'flex', gap: 1, mt: 0.5 }}>
-              <Chip 
-                icon={<Wifi />} 
-                label={`${onlineCount} Online`} 
-                size="small" 
-                color="success" 
-                variant="outlined" 
-              />
-              <Chip 
-                icon={<WifiOff />} 
-                label={`${teamMembers.length - onlineCount} Offline`} 
-                size="small" 
-                variant="outlined" 
-              />
-            </Box>
-          </Box>
-        </Box>
-      </Paper>
+            </p>
+            <div className="flex gap-2 mt-1">
+              <span className="inline-flex items-center gap-1 px-3 py-1 bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-300 rounded-full text-sm border border-green-200 dark:border-green-800">
+                <FiWifi className="w-3 h-3" /> {onlineCount} Online
+              </span>
+              <span className="inline-flex items-center gap-1 px-3 py-1 bg-gray-50 dark:bg-gray-800 text-gray-700 dark:text-gray-300 rounded-full text-sm border border-gray-200 dark:border-gray-700">
+                {teamMembers.length - onlineCount} Offline
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
 
       {/* Tabs for different sections */}
-      <Paper sx={{ width: '100%' }}>
-        <Tabs value={tabValue} onChange={handleTabChange} sx={{ borderBottom: 1, borderColor: 'divider' }}>
-          <Tab label="Team Members" />
-          <Tab label="Performance Analytics" />
-          <Tab label="Team Settings" />
-        </Tabs>
+      <div className="card">
+        <div className="border-b border-gray-200 dark:border-gray-700">
+          <div className="flex gap-1 px-6">
+            {['Team Members', 'Performance Analytics', 'Team Settings'].map((tab, index) => (
+              <button
+                key={tab}
+                onClick={() => setTabValue(index)}
+                className={`px-6 py-4 font-medium transition-colors ${
+                  tabValue === index
+                    ? 'text-primary-500 border-b-2 border-primary-500'
+                    : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
+                }`}
+              >
+                {tab}
+              </button>
+            ))}
+          </div>
+        </div>
 
-        <Box sx={{ p: 3 }}>
+        <div className="p-6">
           {tabValue === 0 && (
             <TeamMembersList 
               members={teamMembers} 
@@ -249,18 +222,18 @@ const TeamsPage: React.FC = () => {
             <TeamPerformance members={teamMembers} />
           )}
           {tabValue === 2 && (
-            <Box>
-              <Typography variant="h6" gutterBottom>
+            <div>
+              <h2 className="text-xl font-semibold mb-2">
                 Team Settings
-              </Typography>
-              <Typography color="text.secondary">
+              </h2>
+              <p className="text-gray-600 dark:text-gray-400">
                 Configure team permissions, notifications, and collaboration settings.
-              </Typography>
+              </p>
               {/* Add team settings form here */}
-            </Box>
+            </div>
           )}
-        </Box>
-      </Paper>
+        </div>
+      </div>
 
       {/* Invite Member Dialog */}
       <InviteMemberDialog 
@@ -271,7 +244,7 @@ const TeamsPage: React.FC = () => {
           console.log('Inviting:', email, 'as', role);
         }}
       />
-    </Box>
+    </div>
   );
 };
 

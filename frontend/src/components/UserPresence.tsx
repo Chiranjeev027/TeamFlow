@@ -1,6 +1,6 @@
 // teamflow/frontend/src/components/UserPresence.tsx
 import React, { useState, useEffect } from 'react';
-import { Box, Typography, Avatar, AvatarGroup, Chip, Tooltip } from '@mui/material';
+import { FiUsers } from 'react-icons/fi';
 import { useSocket } from '../context/SocketContext';
 import { useAuth } from '../context/AuthContext';
 
@@ -73,67 +73,32 @@ const UserPresence: React.FC<{ projectId: string }> = ({ projectId }) => {
   }, [onlineUsers]);
 
   return (
-    <Box sx={{ 
-      display: 'flex', 
-      alignItems: 'center', 
-      gap: 2, 
-      mb: 3,
-      p: 2,
-      backgroundColor: 'background.paper',
-      borderRadius: 2,
-      border: '1px solid',
-      borderColor: 'divider',
-      boxShadow: 1
-    }}>
-      <Typography variant="body2" color="text.primary" sx={{ fontWeight: 600 }}>
-        Online now:
-      </Typography>
-      <AvatarGroup max={6} sx={{ '& .MuiAvatar-root': { width: 32, height: 32, fontSize: '0.8rem' } }}>
+    <div className="flex items-center gap-3 mb-4 p-3 card border border-gray-200 dark:border-gray-700">
+      <div className="flex items-center gap-2">
+        <FiUsers className="w-4 h-4 text-gray-600 dark:text-gray-400" />
+        <span className="text-sm font-semibold text-gray-700 dark:text-gray-300">
+          Online now:
+        </span>
+      </div>
+      <div className="flex -space-x-2">
         {onlineUsers.map((onlineUser) => (
-          <Tooltip key={onlineUser.userId} title={onlineUser.name}>
-            <Avatar 
-              sx={{ 
-                bgcolor: onlineUser.userId === user?.id ? 'primary.main' : 'secondary.main',
-                border: onlineUser.userId === user?.id ? '2px solid' : 'none',
-                borderColor: 'primary.main'
-              }}
-            >
-              {onlineUser.name.charAt(0).toUpperCase()}
-            </Avatar>
-          </Tooltip>
+          <div
+            key={onlineUser.userId}
+            title={onlineUser.name}
+            className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-semibold text-white border-2 border-white dark:border-gray-800 ${
+              onlineUser.userId === user?.id 
+                ? 'bg-primary-500 ring-2 ring-primary-300' 
+                : 'bg-secondary-500'
+            }`}
+          >
+            {onlineUser.name.charAt(0).toUpperCase()}
+          </div>
         ))}
-      </AvatarGroup>
-      
-      {/* Show meaningful status messages */}
-      {onlineUsers.length === 0 && (
-        <Typography variant="body2" color="text.secondary">
-          No one online
-        </Typography>
-      )}
-      {onlineUsers.length === 1 && (
-        <Typography variant="body2" color="text.secondary">
-          You're the only one here
-        </Typography>
-      )}
-      {onlineUsers.length > 1 && (
-        <Chip 
-          label={`${onlineUsers.length} online`} 
-          size="small" 
-          color="primary"
-          variant="outlined"
-        />
-      )}
-      
-      {/* Debug info */}
-      {import.meta.env.DEV && (
-        <Chip 
-          label={`Socket: ${socket?.connected ? 'Connected' : 'Disconnected'}`}
-          size="small"
-          color={socket?.connected ? 'success' : 'error'}
-          variant="outlined"
-        />
-      )}
-    </Box>
+      </div>
+      <span className="px-2 py-1 bg-green-100 dark:bg-green-900/20 text-green-700 dark:text-green-300 text-xs font-medium rounded-full">
+        {onlineUsers.length} online
+      </span>
+    </div>
   );
 };
 

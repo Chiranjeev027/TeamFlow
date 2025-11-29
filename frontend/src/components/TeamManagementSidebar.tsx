@@ -1,39 +1,15 @@
 import React, { useState, useEffect } from 'react';
-import {
-  Box,
-  Typography,
-  Card,
-  CardContent,
-  Button,
-  Avatar,
-  AvatarGroup,
-  Chip,
-  Tabs,
-  Tab,
-  Paper,
-  CircularProgress,
-  Alert,
-  List,
-  ListItem,
-  ListItemAvatar,
-  ListItemText,
-  IconButton,
-  Menu,
-  MenuItem
-} from '@mui/material';
-import {
-  Groups,
-  PersonAdd,
-  Wifi,
-  WifiOff,
-  AdminPanelSettings,
-  Engineering,
-  Visibility,
-  MoreVert,
-  Edit,
-  Delete
-} from '@mui/icons-material';
-// import useAuth not required in this component
+import { 
+  FiUsers, 
+  FiUserPlus, 
+  FiWifi, 
+  FiShield, 
+  FiTool, 
+  FiEye, 
+  FiMoreVertical,
+  FiEdit2,
+  FiTrash2
+} from 'react-icons/fi';
 import InviteMemberDialog from './InviteMemberDialog';
 import TeamPerformance from './TeamPerformance';
 
@@ -66,8 +42,9 @@ const TeamManagementSidebar: React.FC = () => {
   const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+  const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null);
   const [selectedMember, setSelectedMember] = useState<TeamMember | null>(null);
+  const [menuPosition, setMenuPosition] = useState({ top: 0, left: 0 });
 
   // Fetch real team data
   const fetchTeamData = async () => {
@@ -157,6 +134,11 @@ const TeamManagementSidebar: React.FC = () => {
   };
 
   const handleMenuOpen = (event: React.MouseEvent<HTMLElement>, member: TeamMember) => {
+    const rect = event.currentTarget.getBoundingClientRect();
+    setMenuPosition({ 
+      top: rect.bottom + 5, 
+      left: rect.left - 150
+    });
     setAnchorEl(event.currentTarget);
     setSelectedMember(member);
   };
@@ -172,267 +154,255 @@ const TeamManagementSidebar: React.FC = () => {
 
   const getRoleIcon = (role: string) => {
     switch (role) {
-      case 'admin': return <AdminPanelSettings fontSize="small" />;
-      case 'member': return <Engineering fontSize="small" />;
-      case 'viewer': return <Visibility fontSize="small" />;
-      default: return <Engineering fontSize="small" />;
+      case 'admin': return <FiShield className="w-3 h-3" />;
+      case 'member': return <FiTool className="w-3 h-3" />;
+      case 'viewer': return <FiEye className="w-3 h-3" />;
+      default: return <FiTool className="w-3 h-3" />;
     }
   };
 
   const getRoleColor = (role: string) => {
     switch (role) {
-      case 'admin': return 'primary';
-      case 'member': return 'secondary';
-      case 'viewer': return 'default';
-      default: return 'default';
+      case 'admin': return 'bg-primary-100 text-primary-700 dark:bg-primary-900/20 dark:text-primary-300';
+      case 'member': return 'bg-secondary-100 text-secondary-700 dark:bg-secondary-900/20 dark:text-secondary-300';
+      case 'viewer': return 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300';
+      default: return 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300';
     }
   };
 
   if (loading) {
     return (
-      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: 400 }}>
-        <CircularProgress />
-      </Box>
+      <div className="flex justify-center items-center h-96">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-500"></div>
+      </div>
     );
   }
 
   if (error) {
     return (
-      <Alert severity="error" sx={{ m: 2 }}>
+      <div className="p-4 bg-red-100 dark:bg-red-900/20 border border-red-300 dark:border-red-800 rounded-lg text-red-700 dark:text-red-300">
         Error loading team data: {error}
-      </Alert>
+      </div>
     );
   }
 
   return (
-    <Box>
+    <div>
       {/* Header */}
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 4 }}>
-        <Box>
-          <Typography variant="h4" gutterBottom>
-            <Groups sx={{ verticalAlign: 'middle', mr: 2, fontSize: 32 }} />
-            Team Management
-          </Typography>
-          <Typography variant="body1" color="text.secondary">
+      <div className="flex justify-between items-center mb-6">
+        <div>
+          <div className="flex items-center gap-3 mb-2">
+            <FiUsers className="w-8 h-8 text-primary-500" />
+            <h1 className="text-3xl font-bold">Team Management</h1>
+          </div>
+          <p className="text-gray-600 dark:text-gray-400">
             Manage your team members, roles, and collaboration
-          </Typography>
-        </Box>
-        <Button
-          variant="contained"
-          startIcon={<PersonAdd />}
+          </p>
+        </div>
+        <button
           onClick={() => setInviteDialogOpen(true)}
-          size="large"
+          className="btn-primary flex items-center gap-2"
         >
+          <FiUserPlus className="w-4 h-4" />
           Invite Team Members
-        </Button>
-      </Box>
+        </button>
+      </div>
 
       {/* Quick Stats */}
-      <Box sx={{ 
-        display: 'flex', 
-        gap: 3, 
-        mb: 4, 
-        flexDirection: { xs: 'column', sm: 'row' },
-        flexWrap: 'wrap'
-      }}>
-        <Card sx={{ flex: 1, minWidth: { xs: 'auto', sm: 200 } }}>
-          <CardContent>
-            <Typography color="text.secondary" gutterBottom>
-              Total Team Members
-            </Typography>
-            <Typography variant="h4" component="div">
-              {teamMembers.length}
-            </Typography>
-            <Box sx={{ display: 'flex', alignItems: 'center', mt: 1 }}>
-              <Wifi color="success" sx={{ fontSize: 16, mr: 1 }} />
-              <Typography variant="body2" color="success.main">
-                {onlineCount} online
-              </Typography>
-            </Box>
-          </CardContent>
-        </Card>
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+        <div className="card">
+          <p className="text-gray-600 dark:text-gray-400 text-sm mb-1">Total Team Members</p>
+          <p className="text-3xl font-bold mb-2">{teamMembers.length}</p>
+          <div className="flex items-center gap-1">
+            <FiWifi className="w-4 h-4 text-green-500" />
+            <span className="text-sm text-green-600 dark:text-green-400">{onlineCount} online</span>
+          </div>
+        </div>
 
-        <Card sx={{ flex: 1, minWidth: { xs: 'auto', sm: 200 } }}>
-          <CardContent>
-            <Typography color="text.secondary" gutterBottom>
-              Team Admins
-            </Typography>
-            <Typography variant="h4" component="div">
-              {adminCount}
-            </Typography>
-            <AdminPanelSettings color="primary" sx={{ mt: 1 }} />
-          </CardContent>
-        </Card>
+        <div className="card">
+          <p className="text-gray-600 dark:text-gray-400 text-sm mb-1">Team Admins</p>
+          <p className="text-3xl font-bold mb-2">{adminCount}</p>
+          <FiShield className="w-5 h-5 text-primary-500" />
+        </div>
 
-        <Card sx={{ flex: 1, minWidth: { xs: 'auto', sm: 200 } }}>
-          <CardContent>
-            <Typography color="text.secondary" gutterBottom>
-              Active Projects
-            </Typography>
-            <Typography variant="h4" component="div">
-              {totalProjects}
-            </Typography>
-            <Engineering color="secondary" sx={{ mt: 1 }} />
-          </CardContent>
-        </Card>
-      </Box>
+        <div className="card">
+          <p className="text-gray-600 dark:text-gray-400 text-sm mb-1">Active Projects</p>
+          <p className="text-3xl font-bold mb-2">{totalProjects}</p>
+          <FiTool className="w-5 h-5 text-secondary-500" />
+        </div>
+      </div>
 
       {/* Team Overview */}
-      <Paper sx={{ p: 3, mb: 3 }}>
-        <Typography variant="h6" gutterBottom>
-          Team Overview
-        </Typography>
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
-          <AvatarGroup max={6}>
-            {teamMembers.map((member) => (
-              <Avatar 
+      <div className="card mb-6">
+        <h3 className="text-lg font-semibold mb-3">Team Overview</h3>
+        <div className="flex items-center gap-4 mb-3">
+          <div className="flex -space-x-2">
+            {teamMembers.slice(0, 6).map((member) => (
+              <div
                 key={member._id}
-                alt={member.name}
-                sx={{ 
-                  border: member.isOnline ? '2px solid' : 'none',
-                  borderColor: 'success.main'
-                }}
+                title={member.name}
+                className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-semibold text-white border-2 border-white dark:border-gray-800 ${
+                  member.isOnline ? 'bg-green-500 ring-2 ring-green-300' : 'bg-gray-400'
+                }`}
               >
                 {member.name.charAt(0)}
-              </Avatar>
+              </div>
             ))}
-          </AvatarGroup>
-          <Box>
-            <Typography variant="body2" color="text.secondary">
-              Team Members
-            </Typography>
-            <Box sx={{ display: 'flex', gap: 1, mt: 0.5 }}>
-              <Chip 
-                icon={<Wifi />} 
-                label={`${onlineCount} Online`} 
-                size="small" 
-                color="success" 
-                variant="outlined" 
-              />
-              <Chip 
-                icon={<WifiOff />} 
-                label={`${teamMembers.length - onlineCount} Offline`} 
-                size="small" 
-                variant="outlined" 
-              />
-            </Box>
-          </Box>
-        </Box>
-      </Paper>
+            {teamMembers.length > 6 && (
+              <div className="w-10 h-10 rounded-full flex items-center justify-center text-sm font-semibold bg-gray-300 dark:bg-gray-600 border-2 border-white dark:border-gray-800">
+                +{teamMembers.length - 6}
+              </div>
+            )}
+          </div>
+          <div>
+            <p className="text-sm text-gray-600 dark:text-gray-400">Team Members</p>
+            <div className="flex gap-2 mt-1">
+              <span className="px-2 py-1 bg-green-100 dark:bg-green-900/20 text-green-700 dark:text-green-300 text-xs rounded-full flex items-center gap-1">
+                <FiWifi className="w-3 h-3" />
+                {onlineCount} Online
+              </span>
+              <span className="px-2 py-1 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 text-xs rounded-full">
+                {teamMembers.length - onlineCount} Offline
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
 
-      {/* Tabs for different sections */}
-      <Paper sx={{ width: '100%' }}>
-        <Tabs value={tabValue} onChange={handleTabChange} sx={{ borderBottom: 1, borderColor: 'divider' }}>
-          <Tab label="Team Members" />
-          <Tab label="Performance Analytics" />
-          <Tab label="Team Settings" />
-        </Tabs>
+      {/* Tabs */}
+      <div className="card">
+        <div className="flex border-b border-gray-200 dark:border-gray-700 mb-4">
+          <button
+            onClick={() => setTabValue(0)}
+            className={`px-4 py-2 font-medium transition-colors ${
+              tabValue === 0
+                ? 'text-primary-500 border-b-2 border-primary-500'
+                : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
+            }`}
+          >
+            Team Members
+          </button>
+          <button
+            onClick={() => setTabValue(1)}
+            className={`px-4 py-2 font-medium transition-colors ${
+              tabValue === 1
+                ? 'text-primary-500 border-b-2 border-primary-500'
+                : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
+            }`}
+          >
+            Performance Analytics
+          </button>
+          <button
+            onClick={() => setTabValue(2)}
+            className={`px-4 py-2 font-medium transition-colors ${
+              tabValue === 2
+                ? 'text-primary-500 border-b-2 border-primary-500'
+                : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
+            }`}
+          >
+            Team Settings
+          </button>
+        </div>
 
-        <Box sx={{ p: 3 }}>
+        <div>
           {tabValue === 0 && (
-            <Box>
-              <List>
-                {teamMembers.map((member) => (
-                  <ListItem
-                    key={member._id}
-                    secondaryAction={
-                      <IconButton onClick={(e) => handleMenuOpen(e, member)}>
-                        <MoreVert />
-                      </IconButton>
-                    }
-                    sx={{
-                      border: '1px solid',
-                      borderColor: 'divider',
-                      borderRadius: 2,
-                      mb: 1,
-                      '&:hover': {
-                        backgroundColor: 'action.hover',
-                      }
-                    }}
-                  >
-                    <ListItemAvatar>
-                      <Avatar
-                        sx={{
-                          bgcolor: member.isOnline ? 'success.main' : 'grey.400',
-                          border: member.isOnline ? '2px solid' : 'none',
-                          borderColor: 'success.light'
-                        }}
+            <div className="space-y-2">
+              {teamMembers.map((member) => (
+                <div
+                  key={member._id}
+                  className="border border-gray-200 dark:border-gray-700 rounded-lg p-3 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div
+                        className={`w-10 h-10 rounded-full flex items-center justify-center text-white font-semibold ${
+                          member.isOnline ? 'bg-green-500 ring-2 ring-green-300' : 'bg-gray-400'
+                        }`}
                       >
                         {member.name.charAt(0)}
-                      </Avatar>
-                    </ListItemAvatar>
-                    <ListItemText
-                      primary={
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
-                          <Typography variant="subtitle1" fontWeight="600">
-                            {member.name}
-                          </Typography>
-                          <Chip
-                            icon={getRoleIcon(member.role)}
-                            label={member.role.toUpperCase()}
-                            size="small"
-                            color={getRoleColor(member.role)}
-                            variant="outlined"
-                          />
-                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                      </div>
+                      <div>
+                        <div className="flex items-center gap-2 mb-1">
+                          <span className="font-semibold">{member.name}</span>
+                          <span className={`px-2 py-0.5 rounded-full text-xs font-medium flex items-center gap-1 ${getRoleColor(member.role)}`}>
+                            {getRoleIcon(member.role)}
+                            {member.role.toUpperCase()}
+                          </span>
+                          <div className="flex items-center gap-1">
                             {member.isOnline ? (
-                              <Wifi color="success" fontSize="small" />
+                              <FiWifi className="w-3 h-3 text-green-500" />
                             ) : (
-                              <WifiOff color="disabled" fontSize="small" />
+                              <FiWifi className="w-3 h-3 text-gray-400" />
                             )}
-                            <Typography variant="caption" color="text.secondary">
+                            <span className="text-xs text-gray-600 dark:text-gray-400">
                               {member.isOnline ? 'Online' : 'Offline'}
-                            </Typography>
-                          </Box>
-                        </Box>
-                      }
-                      secondary={
-                        <Box sx={{ display: 'flex', gap: 2, mt: 1 }}>
-                          <Typography variant="body2" color="text.secondary">
-                            {member.email}
-                          </Typography>
-                          <Typography variant="body2" color="text.secondary">
-                            {member.projects} projects
-                          </Typography>
-                        </Box>
-                      }
-                    />
-                  </ListItem>
-                ))}
-              </List>
+                            </span>
+                          </div>
+                        </div>
+                        <div className="flex gap-4 text-sm text-gray-600 dark:text-gray-400">
+                          <span>{member.email}</span>
+                          <span>{member.projects} projects</span>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="relative">
+                      <button
+                        onClick={(e) => handleMenuOpen(e, member)}
+                        className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg"
+                      >
+                        <FiMoreVertical className="w-4 h-4" />
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ))}
 
               {/* Context Menu */}
-              <Menu
-                anchorEl={anchorEl}
-                open={Boolean(anchorEl)}
-                onClose={handleMenuClose}
-              >
-                <MenuItem onClick={handleMenuClose}>
-                  <Edit sx={{ mr: 1 }} />
-                  Edit Role {selectedMember ? `for ${selectedMember.name}` : ''}
-                </MenuItem>
-                <MenuItem onClick={handleMenuClose} sx={{ color: 'error.main' }}>
-                  <Delete sx={{ mr: 1 }} />
-                  Remove {selectedMember ? selectedMember.name : 'from Team'}
-                </MenuItem>
-              </Menu>
-            </Box>
+              {anchorEl && selectedMember && (
+                <>
+                  <div 
+                    className="fixed inset-0 z-10"
+                    onClick={handleMenuClose}
+                  />
+                  <div 
+                    className="fixed bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg py-1 min-w-[200px] z-20"
+                    style={{ 
+                      top: `${menuPosition.top}px`,
+                      left: `${menuPosition.left}px`
+                    }}
+                  >
+                    <button
+                      onClick={handleMenuClose}
+                      className="w-full px-4 py-2 text-left hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2"
+                    >
+                      <FiEdit2 className="w-4 h-4" />
+                      Edit Role for {selectedMember.name}
+                    </button>
+                    <button
+                      onClick={handleMenuClose}
+                      className="w-full px-4 py-2 text-left hover:bg-gray-100 dark:hover:bg-gray-700 text-red-500 flex items-center gap-2"
+                    >
+                      <FiTrash2 className="w-4 h-4" />
+                      Remove {selectedMember.name} from Team
+                    </button>
+                  </div>
+                </>
+              )}
+            </div>
           )}
           {tabValue === 1 && (
             <TeamPerformance members={teamMembers} />
           )}
           {tabValue === 2 && (
-            <Box>
-              <Typography variant="h6" gutterBottom>
-                Team Settings
-              </Typography>
-              <Typography color="text.secondary">
+            <div>
+              <h3 className="text-lg font-semibold mb-2">Team Settings</h3>
+              <p className="text-gray-600 dark:text-gray-400">
                 Configure team permissions, notifications, and collaboration settings.
-              </Typography>
-            </Box>
+              </p>
+            </div>
           )}
-        </Box>
-      </Paper>
+        </div>
+      </div>
 
       {/* Invite Member Dialog */}
       <InviteMemberDialog 
@@ -445,7 +415,7 @@ const TeamManagementSidebar: React.FC = () => {
           await fetchTeamData();
         }}
       />
-    </Box>
+    </div>
   );
 };
 

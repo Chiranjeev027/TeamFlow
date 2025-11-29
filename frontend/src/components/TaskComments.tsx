@@ -1,7 +1,6 @@
 // teamflow/frontend/src/components/TaskComments.tsx
 import React, { useState } from 'react';
-import { Box, TextField, Button, Avatar, Typography, Paper } from '@mui/material';
-import { Send } from '@mui/icons-material';
+import { FiSend } from 'react-icons/fi';
 import { useAuth } from '../context/AuthContext';
 
 interface Comment {
@@ -35,65 +34,59 @@ const TaskComments: React.FC<TaskCommentsProps> = ({ taskId: _taskId }) => {
   };
 
   return (
-    <Box sx={{ mt: 2 }}>
-      <Typography variant="h6" gutterBottom sx={{ fontSize: '1rem', fontWeight: 600 }}>
+    <div className="mt-4">
+      <h3 className="text-lg font-semibold mb-3">
         Comments ({comments.length})
-      </Typography>
+      </h3>
 
       {/* Add Comment */}
-      <Box sx={{ display: 'flex', gap: 1, mb: 2 }}>
-        <Avatar sx={{ width: 32, height: 32, mt: 1 }}>
+      <div className="flex gap-2 mb-4">
+        <div className="w-8 h-8 rounded-full bg-primary-500 flex items-center justify-center text-white font-semibold flex-shrink-0">
           {user?.name?.charAt(0).toUpperCase()}
-        </Avatar>
-        <Box sx={{ flexGrow: 1 }}>
-          <TextField
-            fullWidth
-            multiline
+        </div>
+        <div className="flex-1">
+          <textarea
+            className="input-field resize-none"
             rows={2}
             placeholder="Add a comment..."
             value={newComment}
             onChange={(e) => setNewComment(e.target.value)}
-            variant="outlined"
-            size="small"
           />
-          <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 1 }}>
-            <Button
-              variant="contained"
-              endIcon={<Send />}
+          <div className="flex justify-end mt-2">
+            <button
               onClick={addComment}
               disabled={!newComment.trim()}
-              size="small"
+              className="btn-primary flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               Comment
-            </Button>
-          </Box>
-        </Box>
-      </Box>
+              <FiSend className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+      </div>
 
       {/* Comments List */}
-      {comments.map((comment) => (
-        <Paper key={comment.id} sx={{ p: 2, mb: 1 }}>
-          <Box sx={{ display: 'flex', gap: 2 }}>
-            <Avatar sx={{ width: 32, height: 32 }}>
-              {comment.user.name.charAt(0).toUpperCase()}
-            </Avatar>
-            <Box sx={{ flexGrow: 1 }}>
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 0.5 }}>
-                <Typography variant="subtitle2" fontWeight="600">
-                  {comment.user.name}
-                </Typography>
-                <Typography variant="caption" color="text.secondary">
-                  {new Date(comment.createdAt).toLocaleTimeString()}
-                </Typography>
-              </Box>
-              <Typography variant="body2" sx={{ whiteSpace: 'pre-wrap' }}>
-                {comment.content}
-              </Typography>
-            </Box>
-          </Box>
-        </Paper>
-      ))}
-    </Box>
+      <div className="space-y-3">
+        {comments.map((comment) => (
+          <div key={comment.id} className="card p-3">
+            <div className="flex gap-3">
+              <div className="w-8 h-8 rounded-full bg-secondary-500 flex items-center justify-center text-white font-semibold flex-shrink-0">
+                {comment.user.name.charAt(0).toUpperCase()}
+              </div>
+              <div className="flex-1">
+                <div className="flex justify-between items-center mb-1">
+                  <span className="font-semibold text-sm">{comment.user.name}</span>
+                  <span className="text-xs text-gray-500 dark:text-gray-400">
+                    {new Date(comment.createdAt).toLocaleTimeString()}
+                  </span>
+                </div>
+                <p className="text-sm whitespace-pre-wrap">{comment.content}</p>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
   );
 };
 

@@ -1,80 +1,34 @@
 // teamflow/frontend/src/App.tsx
-import { ThemeProvider, createTheme } from '@mui/material/styles';
-import CssBaseline from '@mui/material/CssBaseline';
 import { BrowserRouter as Router } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import { SocketProvider } from './context/SocketContext';
 import AppRoutes from './AppRoutes';
-import { useMemo } from 'react';
 import { useDarkMode } from './hooks/useDarkMode';
+import { useEffect } from 'react';
 
 function App() {
   const { darkMode, toggleDarkMode, mounted } = useDarkMode();
 
-  const theme = useMemo(() => createTheme({
-    palette: {
-      mode: darkMode ? 'dark' : 'light',
-      primary: {
-        main: '#6366f1',
-        light: '#818cf8',
-        dark: '#4f46e5',
-      },
-      secondary: {
-        main: '#ec4899',
-      },
-      background: {
-        default: darkMode ? '#0f172a' : '#f8fafc',
-        paper: darkMode ? '#1e293b' : '#ffffff',
-      },
-    },
-    typography: {
-      fontFamily: '"Inter", "Roboto", "Helvetica", "Arial", sans-serif',
-      h4: {
-        fontWeight: 700,
-      },
-      h6: {
-        fontWeight: 600,
-      },
-    },
-    shape: {
-      borderRadius: 12,
-    },
-    components: {
-      MuiButton: {
-        styleOverrides: {
-          root: {
-            textTransform: 'none',
-            fontWeight: 600,
-            borderRadius: 8,
-          },
-        },
-      },
-      MuiCard: {
-        styleOverrides: {
-          root: {
-            borderRadius: 12,
-            boxShadow: darkMode 
-              ? '0 4px 6px -1px rgb(0 0 0 / 0.3), 0 2px 4px -2px rgb(0 0 0 / 0.3)'
-              : '0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)',
-          },
-        },
-      },
-    },
-  }), [darkMode]);
+  useEffect(() => {
+    // Apply dark mode class to html element for Tailwind
+    if (darkMode) {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+  }, [darkMode]);
 
   // Prevent flash of wrong theme by not rendering until mounted
   if (!mounted) {
     return (
-      <div style={{ visibility: 'hidden' }}>
-        <CssBaseline />
+      <div className="invisible">
         <div>Loading...</div>
       </div>
     );
   }
 
   return (
-    <ThemeProvider theme={theme}>
-      <CssBaseline />
+    <div className={`min-h-screen bg-slate-50 dark:bg-slate-900 text-gray-900 dark:text-gray-100 ${darkMode ? 'dark' : ''}`}>
       <SocketProvider>
         <AuthProvider>
           <Router>
@@ -82,7 +36,7 @@ function App() {
           </Router>
         </AuthProvider>
       </SocketProvider>
-    </ThemeProvider>
+    </div>
   );
 }
 

@@ -1,29 +1,14 @@
 import React from 'react';
 import {
-  List,
-  ListItem,
-  ListItemAvatar,
-  ListItemText,
-  Avatar,
-  IconButton,
-  Chip,
-  Button,
-  Box,
-  Typography,
-  Menu,
-  MenuItem
-} from '@mui/material';
-import {
-  MoreVert,
-  Wifi,
-  WifiOff,
-  AdminPanelSettings,
-  Engineering,
-  Visibility,
-  Edit,
-  Delete
-} from '@mui/icons-material';
-import { PersonAdd } from '@mui/icons-material';
+  FiMoreVertical,
+  FiWifi,
+  FiShield,
+  FiTool,
+  FiEye,
+  FiEdit2,
+  FiTrash2,
+  FiUserPlus
+} from 'react-icons/fi';
 
 interface TeamMember {
   _id: string;
@@ -58,19 +43,19 @@ const TeamMembersList: React.FC<TeamMembersListProps> = ({ members, onInviteMemb
 
   const getRoleIcon = (role: string) => {
     switch (role) {
-      case 'admin': return <AdminPanelSettings color="primary" />;
-      case 'member': return <Engineering color="secondary" />;
-      case 'viewer': return <Visibility color="action" />;
-      default: return <Engineering />;
+      case 'admin': return <FiShield className="w-3 h-3" />;
+      case 'member': return <FiTool className="w-3 h-3" />;
+      case 'viewer': return <FiEye className="w-3 h-3" />;
+      default: return <FiTool className="w-3 h-3" />;
     }
   };
 
   const getRoleColor = (role: string) => {
     switch (role) {
-      case 'admin': return 'primary';
-      case 'member': return 'secondary';
-      case 'viewer': return 'default';
-      default: return 'default';
+      case 'admin': return 'bg-primary-100 text-primary-700 dark:bg-primary-900/20 dark:text-primary-300';
+      case 'member': return 'bg-secondary-100 text-secondary-700 dark:bg-secondary-900/20 dark:text-secondary-300';
+      case 'viewer': return 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300';
+      default: return 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300';
     }
   };
 
@@ -88,115 +73,110 @@ const TeamMembersList: React.FC<TeamMembersListProps> = ({ members, onInviteMemb
     return `${diffDays}d ago`;
   };
 
+  const [menuPosition, setMenuPosition] = React.useState({ top: 0, left: 0 });
+
+  const handleMenuOpenWithPosition = (event: React.MouseEvent<HTMLElement>, member: TeamMember) => {
+    const rect = event.currentTarget.getBoundingClientRect();
+    setMenuPosition({ top: rect.bottom + 5, left: rect.left - 150 });
+    handleMenuOpen(event, member);
+  };
+
   return (
-    <Box>
+    <div>
       {members.length === 0 ? (
-        <Box textAlign="center" py={4}>
-          <Typography variant="h6" color="text.secondary" gutterBottom>
+        <div className="text-center py-8">
+          <h3 className="text-xl font-semibold text-gray-600 dark:text-gray-400 mb-2">
             No team members yet
-          </Typography>
-          <Typography variant="body2" color="text.secondary">
+          </h3>
+          <p className="text-sm text-gray-500 dark:text-gray-500 mb-4">
             Start by inviting team members to collaborate on projects.
-          </Typography>
+          </p>
           {onInviteMember && (
-            <Box sx={{ mt: 2 }}>
-              <Button variant="contained" onClick={onInviteMember} startIcon={<PersonAdd />}>
-                Invite Member
-              </Button>
-            </Box>
+            <button onClick={onInviteMember} className="btn-primary flex items-center gap-2 mx-auto">
+              <FiUserPlus className="w-4 h-4" />
+              Invite Member
+            </button>
           )}
-        </Box>
+        </div>
       ) : (
-        <List>
+        <div className="space-y-2">
           {members.map((member) => (
-            <ListItem
+            <div
               key={member._id}
-              secondaryAction={
-                <IconButton onClick={(e) => handleMenuOpen(e, member)}>
-                  <MoreVert />
-                </IconButton>
-              }
-              sx={{
-                border: '1px solid',
-                borderColor: 'divider',
-                borderRadius: 2,
-                mb: 1,
-                '&:hover': {
-                  backgroundColor: 'action.hover',
-                }
-              }}
+              className="border border-gray-200 dark:border-gray-700 rounded-lg p-3 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
             >
-              <ListItemAvatar>
-                <Avatar
-                  sx={{
-                    bgcolor: member.isOnline ? 'success.main' : 'grey.400',
-                    border: member.isOnline ? '2px solid' : 'none',
-                    borderColor: 'success.light'
-                  }}
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div
+                    className={`w-10 h-10 rounded-full flex items-center justify-center text-white font-semibold ${
+                      member.isOnline ? 'bg-green-500 ring-2 ring-green-300' : 'bg-gray-400'
+                    }`}
+                  >
+                    {member.name.charAt(0)}
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className="font-semibold">{member.name}</span>
+                      <span className={`px-2 py-0.5 rounded-full text-xs font-medium flex items-center gap-1 ${getRoleColor(member.role)}`}>
+                        {getRoleIcon(member.role)}
+                        {member.role.toUpperCase()}
+                      </span>
+                      <div className="flex items-center gap-1">
+                        {member.isOnline ? (
+                          <FiWifi className="w-3 h-3 text-green-500" />
+                        ) : (
+                          <FiWifi className="w-3 h-3 text-gray-400" />
+                        )}
+                        <span className="text-xs text-gray-600 dark:text-gray-400">
+                          {member.isOnline ? 'Online' : `Last seen ${formatLastSeen(member.lastSeen)}`}
+                        </span>
+                      </div>
+                    </div>
+                    <div className="flex gap-4 text-sm text-gray-600 dark:text-gray-400">
+                      <span>{member.email}</span>
+                      <span>{member.projects} projects</span>
+                      <span className="text-green-600 dark:text-green-400">{member.tasksCompleted} tasks completed</span>
+                    </div>
+                  </div>
+                </div>
+                <button
+                  onClick={(e) => handleMenuOpenWithPosition(e, member)}
+                  className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg"
                 >
-                  {member.name.charAt(0)}
-                </Avatar>
-              </ListItemAvatar>
-              <ListItemText
-                primary={
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
-                    <Typography variant="subtitle1" fontWeight="600">
-                      {member.name}
-                    </Typography>
-                    <Chip
-                      icon={getRoleIcon(member.role)}
-                      label={member.role.toUpperCase()}
-                      size="small"
-                      color={getRoleColor(member.role)}
-                      variant="outlined"
-                    />
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                      {member.isOnline ? (
-                        <Wifi color="success" fontSize="small" />
-                      ) : (
-                        <WifiOff color="disabled" fontSize="small" />
-                      )}
-                      <Typography variant="caption" color="text.secondary">
-                        {member.isOnline ? 'Online' : `Last seen ${formatLastSeen(member.lastSeen)}`}
-                      </Typography>
-                    </Box>
-                  </Box>
-                }
-                secondary={
-                  <Box sx={{ display: 'flex', gap: 2, mt: 1 }}>
-                    <Typography variant="body2" color="text.secondary">
-                      {member.email}
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary">
-                      {member.projects} projects
-                    </Typography>
-                    <Typography variant="body2" color="success.main">
-                      {member.tasksCompleted} tasks completed
-                    </Typography>
-                  </Box>
-                }
-              />
-            </ListItem>
+                  <FiMoreVertical className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
           ))}
-        </List>
+        </div>
       )}
 
       {/* Context Menu */}
-      <Menu
-        anchorEl={anchorEl}
-        open={Boolean(anchorEl)}
-        onClose={handleMenuClose}
-      >
-          <MenuItem onClick={handleMenuClose}>
-            <Edit sx={{ mr: 1 }} />
-            Edit Role {selectedMember ? `for ${selectedMember.name}` : ''}
-          </MenuItem>
-        <MenuItem onClick={handleMenuClose} sx={{ color: 'error.main' }}>
-          <Delete sx={{ mr: 1 }} />
-          Remove from Team
-        </MenuItem>
-      </Menu>
-    </Box>
+      {anchorEl && selectedMember && (
+        <>
+          <div className="fixed inset-0 z-10" onClick={handleMenuClose} />
+          <div
+            className="fixed bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg py-1 min-w-[200px] z-20"
+            style={{ top: `${menuPosition.top}px`, left: `${menuPosition.left}px` }}
+          >
+            <button
+              onClick={handleMenuClose}
+              className="w-full px-4 py-2 text-left hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2"
+            >
+              <FiEdit2 className="w-4 h-4" />
+              Edit Role {selectedMember ? `for ${selectedMember.name}` : ''}
+            </button>
+            <button
+              onClick={handleMenuClose}
+              className="w-full px-4 py-2 text-left hover:bg-gray-100 dark:hover:bg-gray-700 text-red-500 flex items-center gap-2"
+            >
+              <FiTrash2 className="w-4 h-4" />
+              Remove from Team
+            </button>
+          </div>
+        </>
+      )}
+    </div>
   );
 };
 

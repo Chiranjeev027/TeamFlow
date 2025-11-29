@@ -1,14 +1,5 @@
 // teamflow/frontend/src/pages/AuthPage.tsx
 import React, { useState } from 'react';
-import {
-  Box,
-  Paper,
-  TextField,
-  Button,
-  Typography,
-  Alert,
-  CircularProgress
-} from '@mui/material';
 import { useAuth } from '../context/AuthContext';
 
 const AuthPage: React.FC = () => {
@@ -48,76 +39,86 @@ const AuthPage: React.FC = () => {
   };
 
   return (
-    <Box
-      display="flex"
-      justifyContent="center"
-      alignItems="center"
-      minHeight="100vh"
-      bgcolor="#f8fafc"
-    >
-      <Paper elevation={3} sx={{ padding: 4, width: 400, maxWidth: '90vw' }}>
-        <Typography variant="h4" component="h1" gutterBottom align="center" color="primary">
+    <div className="flex justify-center items-center min-h-screen bg-slate-50 dark:bg-slate-900">
+      <div className="card p-8 w-[400px] max-w-[90vw]">
+        <h1 className="text-3xl font-bold text-center text-primary-500 mb-2">
           TeamFlow
-        </Typography>
-        <Typography variant="subtitle1" gutterBottom align="center" color="textSecondary">
+        </h1>
+        <p className="text-center text-gray-600 dark:text-gray-400 mb-6">
           {isLogin ? 'Login to your account' : 'Create your account'}
-        </Typography>
+        </p>
 
-        {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
+        {error && (
+          <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-800 dark:text-red-200 px-4 py-3 rounded-lg mb-4">
+            {error}
+          </div>
+        )}
 
         <form onSubmit={handleSubmit}>
           {!isLogin && (
-            <TextField
-              fullWidth
-              label="Full Name"
-              name="name"
-              value={formData.name}
-              onChange={handleChange}
-              margin="normal"
-              required
-            />
+            <div className="mb-4">
+              <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">
+                Full Name
+              </label>
+              <input
+                type="text"
+                name="name"
+                value={formData.name}
+                onChange={handleChange}
+                required
+                className="input-field"
+              />
+            </div>
           )}
-          <TextField
-            fullWidth
-            label="Email"
-            type="email"
-            name="email"
-            value={formData.email}
-            onChange={handleChange}
-            margin="normal"
-            required
-          />
-          <TextField
-            fullWidth
-            label="Password"
-            type="password"
-            name="password"
-            value={formData.password}
-            onChange={handleChange}
-            margin="normal"
-            required
-          />
-          <Button
+          <div className="mb-4">
+            <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">
+              Email
+            </label>
+            <input
+              type="email"
+              name="email"
+              value={formData.email}
+              onChange={handleChange}
+              required
+              className="input-field"
+            />
+          </div>
+          <div className="mb-6">
+            <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">
+              Password
+            </label>
+            <input
+              type="password"
+              name="password"
+              value={formData.password}
+              onChange={handleChange}
+              required
+              className="input-field"
+            />
+          </div>
+          <button
             type="submit"
-            fullWidth
-            variant="contained"
-            sx={{ mt: 3, mb: 2 }}
             disabled={loading}
-            size="large"
+            className="w-full btn-primary text-lg py-3 disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {loading ? <CircularProgress size={24} /> : (isLogin ? 'Login' : 'Sign Up')}
-          </Button>
+            {loading ? (
+              <div className="flex items-center justify-center">
+                <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+              </div>
+            ) : (
+              isLogin ? 'Login' : 'Sign Up'
+            )}
+          </button>
         </form>
 
-        <Button 
-          fullWidth 
+        <button 
           onClick={() => setIsLogin(!isLogin)}
-          color="secondary"
+          className="w-full mt-4 text-secondary-500 hover:text-secondary-600 font-medium transition-colors"
         >
           {isLogin ? "Don't have an account? Sign up" : "Already have an account? Login"}
-        </Button>
-      </Paper>
-    </Box>
+        </button>
+      </div>
+    </div>
   );
 };
 

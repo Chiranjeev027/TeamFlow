@@ -1,21 +1,9 @@
 import React from 'react';
 import {
-  Box,
-  Typography,
-  Card,
-  CardContent,
-  LinearProgress,
-  List,
-  ListItem,
-  ListItemText,
-  ListItemIcon,
-  Avatar
-} from '@mui/material';
-import {
-  TrendingUp,
-  EmojiEvents,
-  CheckCircle
-} from '@mui/icons-material';
+  FiTrendingUp,
+  FiAward,
+  FiCheckCircle
+} from 'react-icons/fi';
 
 interface TeamMember {
   _id: string;
@@ -41,97 +29,76 @@ const TeamPerformance: React.FC<TeamPerformanceProps> = ({ members }) => {
   );
 
   return (
-    <Box>
-      <Typography variant="h6" gutterBottom>
+    <div>
+      <h2 className="text-xl font-semibold mb-4">
         Team Performance
-      </Typography>
+      </h2>
 
-      {/* Stats Cards - Using Flexbox instead of Grid */}
-      <Box sx={{ 
-        display: 'flex', 
-        gap: 3, 
-        mb: 3, 
-        flexDirection: { xs: 'column', sm: 'row' },
-        alignItems: { xs: 'stretch', sm: 'flex-start' }
-      }}>
-        <Card sx={{ flex: 1, minWidth: { xs: 'auto', sm: 200 } }}>
-          <CardContent>
-            <TrendingUp color="primary" />
-            <Typography variant="h6" sx={{ mt: 1 }}>
-              Total Tasks Completed
-            </Typography>
-            <Typography variant="h4" color="primary">
-              {totalTasks}
-            </Typography>
-          </CardContent>
-        </Card>
+      {/* Stats Cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+        <div className="card">
+          <FiTrendingUp className="w-8 h-8 text-primary-500 mb-2" />
+          <h3 className="text-lg font-semibold mb-1">
+            Total Tasks Completed
+          </h3>
+          <p className="text-3xl font-bold text-primary-500">
+            {totalTasks}
+          </p>
+        </div>
 
-        <Card sx={{ flex: 1, minWidth: { xs: 'auto', sm: 200 } }}>
-          <CardContent>
-            <CheckCircle color="success" />
-            <Typography variant="h6" sx={{ mt: 1 }}>
-              Average per Member
-            </Typography>
-            <Typography variant="h4" color="success.main">
-              {Math.round(avgTasksPerMember)}
-            </Typography>
-          </CardContent>
-        </Card>
+        <div className="card">
+          <FiCheckCircle className="w-8 h-8 text-green-500 mb-2" />
+          <h3 className="text-lg font-semibold mb-1">
+            Average per Member
+          </h3>
+          <p className="text-3xl font-bold text-green-500">
+            {Math.round(avgTasksPerMember)}
+          </p>
+        </div>
 
-        <Card sx={{ flex: 1, minWidth: { xs: 'auto', sm: 200 } }}>
-          <CardContent>
-            <EmojiEvents color="warning" />
-            <Typography variant="h6" sx={{ mt: 1 }}>
-              Top Performer
-            </Typography>
-            <Typography variant="h6" color="warning.main">
-              {topPerformer.name}
-            </Typography>
-            <Typography variant="body2">
-              {topPerformer.tasksCompleted} tasks
-            </Typography>
-          </CardContent>
-        </Card>
-      </Box>
+        <div className="card">
+          <FiAward className="w-8 h-8 text-yellow-500 mb-2" />
+          <h3 className="text-lg font-semibold mb-1">
+            Top Performer
+          </h3>
+          <p className="text-xl font-bold text-yellow-600 dark:text-yellow-500">
+            {topPerformer.name}
+          </p>
+          <p className="text-sm text-gray-600 dark:text-gray-400">
+            {topPerformer.tasksCompleted} tasks
+          </p>
+        </div>
+      </div>
 
-      <Card>
-        <CardContent>
-          <Typography variant="h6" gutterBottom>
-            Member Performance
-          </Typography>
-          <List>
-            {members.map((member) => (
-              <ListItem key={member._id} divider>
-                <ListItemIcon>
-                  <Avatar sx={{ width: 40, height: 40 }}>
-                    {member.name.charAt(0)}
-                  </Avatar>
-                </ListItemIcon>
-                <ListItemText
-                  primary={
-                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <Typography variant="subtitle1">
-                        {member.name}
-                      </Typography>
-                      <Typography variant="body2" color="text.secondary">
-                        {member.tasksCompleted} tasks
-                      </Typography>
-                    </Box>
-                  }
-                  secondary={
-                    <LinearProgress 
-                      variant="determinate" 
-                      value={Math.min((member.tasksCompleted / (topPerformer.tasksCompleted || 1)) * 100, 100)}
-                      sx={{ mt: 1, height: 8, borderRadius: 4 }}
+      <div className="card">
+        <h3 className="text-lg font-semibold mb-4">
+          Member Performance
+        </h3>
+        <div className="space-y-4">
+          {members.map((member) => (
+            <div key={member._id} className="pb-4 border-b border-gray-200 dark:border-gray-700 last:border-0">
+              <div className="flex items-center gap-3 mb-2">
+                <div className="w-10 h-10 rounded-full bg-primary-500 flex items-center justify-center text-white font-semibold">
+                  {member.name.charAt(0)}
+                </div>
+                <div className="flex-1">
+                  <div className="flex justify-between items-center mb-1">
+                    <span className="font-semibold">{member.name}</span>
+                    <span className="text-sm text-gray-600 dark:text-gray-400">{member.tasksCompleted} tasks</span>
+                  </div>
+                  <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+                    <div
+                      className="bg-primary-500 h-2 rounded-full transition-all"
+                      style={{ width: `${Math.min((member.tasksCompleted / (topPerformer.tasksCompleted || 1)) * 100, 100)}%` }}
                     />
-                  }
-                />
-              </ListItem>
-            ))}
-          </List>
-        </CardContent>
-      </Card>
-    </Box>
+                  </div>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
   );
 };
 

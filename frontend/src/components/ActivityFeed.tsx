@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Paper, Typography, List, ListItem, ListItemText } from '@mui/material';
+import { FiActivity } from 'react-icons/fi';
 import { useSocket } from '../context/SocketContext';
 
 interface Activity {
@@ -37,21 +37,25 @@ const ActivityFeed: React.FC<{ projectId: string }> = ({ projectId }) => {
   }, [socket, projectId]);
 
   return (
-    <Paper sx={{ p: 2, mt: 2 }}>
-      <Typography variant="h6" gutterBottom>Recent Activity</Typography>
-      <List>
+    <div className="card p-4 mt-4">
+      <div className="flex items-center gap-2 mb-4">
+        <FiActivity className="w-5 h-5 text-primary-500" />
+        <h3 className="text-lg font-semibold">Recent Activity</h3>
+      </div>
+      <div className="space-y-3">
         {activities.map(a => (
-          <ListItem key={a.id} disablePadding>
-            <ListItemText primary={a.text} secondary={a.time} />
-          </ListItem>
+          <div key={a.id} className="border-l-2 border-primary-500 pl-3 py-1">
+            <p className="text-sm text-gray-900 dark:text-gray-100">{a.text}</p>
+            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{a.time}</p>
+          </div>
         ))}
         {activities.length === 0 && (
-          <ListItem>
-            <ListItemText primary="No recent activity" />
-          </ListItem>
+          <p className="text-sm text-gray-500 dark:text-gray-400 text-center py-4">
+            No recent activity
+          </p>
         )}
-      </List>
-    </Paper>
+      </div>
+    </div>
   );
 };
 

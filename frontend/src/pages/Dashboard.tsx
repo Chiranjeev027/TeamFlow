@@ -1,47 +1,22 @@
 import React, { useState, useEffect } from 'react';
-import {
-  Box,
-  AppBar,
-  Toolbar,
-  Typography,
-  Button,
-  Drawer,
-  List,
-  ListItem,
-  ListItemButton,
-  ListItemIcon,
-  ListItemText,
-  Avatar,
-  Divider,
-  Paper,
-  Card,
-  CardContent,
-  IconButton,
-  CircularProgress,
-  AvatarGroup
-} from '@mui/material';
-import {
-  Dashboard as DashboardIcon,
-  Folder,
-  Groups,
-  CalendarMonth,
-  BarChart,
-  Settings,
-  Logout,
-  Add,
-  People,
-  Assignment,
-  CheckCircle,
-  Brightness4,
-  Brightness7,
-} from '@mui/icons-material';
+import { 
+  FiHome, 
+  FiFolder, 
+  FiUsers, 
+  FiCalendar, 
+  FiBarChart2, 
+  FiSettings, 
+  FiLogOut, 
+  FiPlus, 
+  FiCheckCircle,
+  FiSun,
+  FiMoon
+} from 'react-icons/fi';
 import { useAuth } from '../context/AuthContext';
 import ProjectList from '../components/ProjectList';
 import TeamManagementSidebar from '../components/TeamManagementSidebar';
 import AnalyticsDashboard from '../components/AnalyticsDashboard';
 import UserSettings from '../components/UserSettings';
-
-const drawerWidth = 280;
 
 interface DashboardProps {
   toggleDarkMode: () => void;
@@ -90,12 +65,12 @@ const Dashboard: React.FC<DashboardProps> = ({ toggleDarkMode, darkMode }) => {
 
   // Menu items with navigation
   const menuItems = [
-    { id: 'dashboard', text: 'Dashboard', icon: <DashboardIcon /> },
-    { id: 'projects', text: 'Projects', icon: <Folder /> },
-    { id: 'team', text: 'Team', icon: <Groups /> },
-    { id: 'calendar', text: 'Calendar', icon: <CalendarMonth /> },
-    { id: 'analytics', text: 'Analytics', icon: <BarChart /> },
-    { id: 'settings', text: 'Settings', icon: <Settings /> },
+    { id: 'dashboard', text: 'Dashboard', icon: <FiHome className="w-5 h-5" /> },
+    { id: 'projects', text: 'Projects', icon: <FiFolder className="w-5 h-5" /> },
+    { id: 'team', text: 'Team', icon: <FiUsers className="w-5 h-5" /> },
+    { id: 'calendar', text: 'Calendar', icon: <FiCalendar className="w-5 h-5" /> },
+    { id: 'analytics', text: 'Analytics', icon: <FiBarChart2 className="w-5 h-5" /> },
+    { id: 'settings', text: 'Settings', icon: <FiSettings className="w-5 h-5" /> },
   ];
 
   const fetchDashboardData = async () => {
@@ -211,45 +186,32 @@ const Dashboard: React.FC<DashboardProps> = ({ toggleDarkMode, darkMode }) => {
   }, []);
 
   const StatCard = ({ title, value, icon, color, subtitle }: any) => (
-    <Card sx={{ 
-      background: `linear-gradient(135deg, ${color} 0%, ${color}dd 100%)`,
-      color: 'white',
-      borderRadius: 3,
-      height: '100%',
-      transition: 'transform 0.2s ease, box-shadow 0.2s ease',
-      '&:hover': {
-        transform: 'translateY(-4px)',
-        boxShadow: '0 8px 25px rgba(0,0,0,0.15)',
-      }
-    }}>
-      <CardContent sx={{ p: 3 }}>
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-          <Box>
-            <Typography variant="h3" fontWeight="700" sx={{ mb: 1 }}>
-              {value}
-            </Typography>
-            <Typography variant="h6" sx={{ opacity: 0.9, fontSize: '1rem' }}>
-              {title}
-            </Typography>
-            {subtitle && (
-              <Typography variant="body2" sx={{ opacity: 0.8, mt: 0.5 }}>
-                {subtitle}
-              </Typography>
-            )}
-          </Box>
-          <Box sx={{ 
-            p: 1.5, 
-            borderRadius: 2, 
-            backgroundColor: 'rgba(255,255,255,0.2)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center'
-          }}>
-            {icon}
-          </Box>
-        </Box>
-      </CardContent>
-    </Card>
+    <div 
+      className={`card p-6 h-full transition-all duration-200 hover:-translate-y-1 hover:shadow-xl`}
+      style={{ 
+        background: `linear-gradient(135deg, ${color} 0%, ${color}dd 100%)`,
+        color: 'white'
+      }}
+    >
+      <div className="flex justify-between items-start">
+        <div>
+          <h3 className="text-4xl font-bold mb-2">
+            {value}
+          </h3>
+          <h6 className="text-lg opacity-90">
+            {title}
+          </h6>
+          {subtitle && (
+            <p className="text-sm opacity-80 mt-1">
+              {subtitle}
+            </p>
+          )}
+        </div>
+        <div className="p-3 rounded-lg bg-white/20 flex items-center justify-center">
+          {icon}
+        </div>
+      </div>
+    </div>
   );
 
   const renderMainContent = () => {
@@ -258,94 +220,65 @@ const Dashboard: React.FC<DashboardProps> = ({ toggleDarkMode, darkMode }) => {
         return (
           <>
             {/* Analytics Cards */}
-            <Box sx={{ 
-              display: 'flex', 
-              flexDirection: { xs: 'column', sm: 'row' },
-              gap: 3, 
-              mb: 4,
-              flexWrap: 'wrap'
-            }}>
-              <Box sx={{ flex: '1 1 200px', minWidth: '200px' }}>
-                <StatCard
-                  title="Total Projects"
-                  value={stats.totalProjects}
-                  icon={<Folder sx={{ color: 'white', fontSize: 28 }} />}
-                  color="#667eea"
-                  subtitle={`${stats.activeProjects} active`}
-                />
-              </Box>
-              <Box sx={{ flex: '1 1 200px', minWidth: '200px' }}>
-                <StatCard
-                  title="Team Members"
-                  value={stats.totalTeamMembers}
-                  icon={<People sx={{ color: 'white', fontSize: 28 }} />}
-                  color="#f093fb"
-                  subtitle={`${teamMembers.filter(m => m.isOnline).length} online`}
-                />
-              </Box>
-              <Box sx={{ flex: '1 1 200px', minWidth: '200px' }}>
-                <StatCard
-                  title="Tasks Completed"
-                  value={stats.completedTasks}
-                  icon={<CheckCircle sx={{ color: 'white', fontSize: 28 }} />}
-                  color="#4facfe"
-                  subtitle="Across all projects"
-                />
-              </Box>
-              <Box sx={{ flex: '1 1 200px', minWidth: '200px' }}>
-                <StatCard
-                  title="Overall Progress"
-                  value={`${stats.completionRate}%`}
-                  icon={<Assignment sx={{ color: 'white', fontSize: 28 }} />}
-                  color="#43e97b"
-                  subtitle="Completion rate"
-                />
-              </Box>
-            </Box>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+              <StatCard
+                title="Total Projects"
+                value={stats.totalProjects}
+                icon={<FiFolder className="text-white text-3xl" />}
+                color="#667eea"
+                subtitle={`${stats.activeProjects} active`}
+              />
+              <StatCard
+                title="Team Members"
+                value={stats.totalTeamMembers}
+                icon={<FiUsers className="text-white text-3xl" />}
+                color="#f093fb"
+                subtitle={`${teamMembers.filter(m => m.isOnline).length} online`}
+              />
+              <StatCard
+                title="Tasks Completed"
+                value={stats.completedTasks}
+                icon={<FiCheckCircle className="text-white text-3xl" />}
+                color="#4facfe"
+                subtitle="Across all projects"
+              />
+              <StatCard
+                title="Overall Progress"
+                value={`${stats.completionRate}%`}
+                icon={<FiBarChart2 className="text-white text-3xl" />}
+                color="#43e97b"
+                subtitle="Completion rate"
+              />
+            </div>
 
             {/* Projects Section */}
-            <Paper sx={{ 
-              p: 3, 
-              borderRadius: 3,
-              backgroundColor: 'background.paper'
-            }}>
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-                <Typography variant="h5" fontWeight="600">
+            <div className="card p-6">
+              <div className="flex justify-between items-center mb-6">
+                <h2 className="text-2xl font-semibold">
                   Your Projects
-                </Typography>
-                <Button 
-                  variant="contained" 
-                  startIcon={<Add />}
-                >
-                  New Project
-                </Button>
-              </Box>
+                </h2>
+                <button className="btn-primary flex items-center gap-2">
+                  <FiPlus /> New Project
+                </button>
+              </div>
               <ProjectList onProjectCreated={fetchDashboardData} />
-            </Paper>
+            </div>
           </>
         );
 
       case 'projects':
         return (
-          <Paper sx={{ 
-            p: 3, 
-            borderRadius: 3,
-            backgroundColor: 'background.paper',
-            minHeight: '600px'
-          }}>
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-              <Typography variant="h4" fontWeight="600">
+          <div className="card p-6 min-h-[600px]">
+            <div className="flex justify-between items-center mb-6">
+              <h1 className="text-3xl font-semibold">
                 All Projects
-              </Typography>
-              <Button 
-                variant="contained" 
-                startIcon={<Add />}
-              >
-                New Project
-              </Button>
-            </Box>
+              </h1>
+              <button className="btn-primary flex items-center gap-2">
+                <FiPlus /> New Project
+              </button>
+            </div>
             <ProjectList onProjectCreated={fetchDashboardData} />
-          </Paper>
+          </div>
         );
 
       case 'team':
@@ -359,39 +292,25 @@ const Dashboard: React.FC<DashboardProps> = ({ toggleDarkMode, darkMode }) => {
 
       case 'calendar':
         return (
-          <Paper sx={{ 
-            p: 3, 
-            borderRadius: 3,
-            backgroundColor: 'background.paper',
-            textAlign: 'center',
-            minHeight: '400px',
-            display: 'flex',
-            flexDirection: 'column',
-            justifyContent: 'center',
-            alignItems: 'center'
-          }}>
-            <CalendarMonth sx={{ fontSize: 64, color: 'primary.main', mb: 2 }} />
-            <Typography variant="h4" gutterBottom>
+          <div className="card p-6 text-center min-h-[400px] flex flex-col justify-center items-center">
+            <FiCalendar className="text-6xl text-primary-500 mb-4" />
+            <h1 className="text-3xl font-bold mb-2">
               Calendar View
-            </Typography>
-            <Typography variant="body1" color="text.secondary" sx={{ mb: 3 }}>
+            </h1>
+            <p className="text-gray-600 dark:text-gray-400 mb-6">
               Project deadlines, milestones, and team availability will appear here.
-            </Typography>
-            <Button variant="outlined">
+            </p>
+            <button className="btn-outline">
               Coming Soon
-            </Button>
-          </Paper>
+            </button>
+          </div>
         );
 
       default:
         return (
-          <Paper sx={{ 
-            p: 3, 
-            borderRadius: 3,
-            backgroundColor: 'background.paper'
-          }}>
-            <Typography variant="h5">Welcome to TeamFlow</Typography>
-          </Paper>
+          <div className="card p-6">
+            <h2 className="text-2xl">Welcome to TeamFlow</h2>
+          </div>
         );
     }
   };
@@ -403,173 +322,126 @@ const Dashboard: React.FC<DashboardProps> = ({ toggleDarkMode, darkMode }) => {
 
   if (loading) {
     return (
-      <Box sx={{ display: 'flex', minHeight: '100vh', backgroundColor: 'background.default' }}>
-        <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', width: '100%' }}>
-          <CircularProgress />
-        </Box>
-      </Box>
+      <div className="flex min-h-screen bg-slate-50 dark:bg-slate-900">
+        <div className="flex justify-center items-center w-full">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-500"></div>
+        </div>
+      </div>
     );
   }
 
   return (
-    <Box sx={{ display: 'flex', minHeight: '100vh', backgroundColor: 'background.default', overflow: 'hidden' }}>
+    <div className="flex min-h-screen bg-slate-50 dark:bg-slate-900 overflow-hidden">
       {/* Sidebar */}
-      <Drawer
-        variant="permanent"
-        sx={{
-          width: drawerWidth,
-          flexShrink: 0,
-          '& .MuiDrawer-paper': {
-            width: drawerWidth,
-            boxSizing: 'border-box',
-            border: 'none',
-            background: 'linear-gradient(180deg, #667eea 0%, #764ba2 100%)',
-            color: 'white',
-          },
-        }}
+      <div 
+        className="w-[280px] flex-shrink-0 bg-gradient-to-b from-indigo-600 to-purple-700 text-white flex flex-col"
+        style={{ height: '100vh', position: 'fixed' }}
       >
-        <Box sx={{ p: 3 }}>
-          <Typography variant="h5" fontWeight="700" gutterBottom>
+        <div className="p-6">
+          <h1 className="text-2xl font-bold mb-1">
             TeamFlow
-          </Typography>
-          <Typography variant="body2" sx={{ opacity: 0.8 }}>
+          </h1>
+          <p className="text-sm opacity-80">
             Project Management
-          </Typography>
-        </Box>
+          </p>
+        </div>
 
-        <List sx={{ px: 2, mt: 2 }}>
+        <nav className="px-4 mt-4 flex-1 overflow-y-auto">
           {menuItems.map((item) => (
-            <ListItem 
+            <button
               key={item.id}
-              disablePadding
-              sx={{
-                borderRadius: 2,
-                mb: 1,
-              }}
+              onClick={() => setActiveSection(item.id)}
+              className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg mb-2 transition-all ${
+                activeSection === item.id
+                  ? 'bg-white/20 border-2 border-white/80'
+                  : 'border-2 border-transparent hover:bg-white/10'
+              }`}
             >
-              <ListItemButton
-                onClick={() => setActiveSection(item.id)}
-                sx={{
-                  borderRadius: 2,
-                  border: activeSection === item.id ? '2px solid rgba(255, 255, 255, 0.8)' : '2px solid transparent',
-                  '&:hover': {
-                    backgroundColor: 'rgba(255, 255, 255, 0.1)',
-                  },
-                }}
-              >
-                <ListItemIcon sx={{ color: 'white', minWidth: 40 }}>
-                  {item.icon}
-                </ListItemIcon>
-                <ListItemText 
-                  primary={item.text} 
-                  primaryTypographyProps={{
-                    fontWeight: activeSection === item.id ? 600 : 400
-                  }}
-                />
-              </ListItemButton>
-            </ListItem>
+              <span className="text-white">{item.icon}</span>
+              <span className={`text-white ${activeSection === item.id ? 'font-semibold' : 'font-normal'}`}>
+                {item.text}
+              </span>
+            </button>
           ))}
-        </List>
+        </nav>
 
         {/* Sidebar Team Status */}
-        <Box sx={{ mt: 'auto', p: 2 }}>
-          <Divider sx={{ borderColor: 'rgba(255, 255, 255, 0.2)', mb: 2 }} />
-          
-          {/* Team Online Status */}
-          <Box sx={{ mb: 2 }}>
-            <Typography variant="subtitle2" sx={{ color: 'white', opacity: 0.8, mb: 1 }}>
-              Team Online
-            </Typography>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-              <AvatarGroup max={3} sx={{ '& .MuiAvatar-root': { width: 28, height: 28, fontSize: '0.8rem' } }}>
-                {teamMembers.slice(0, 3).map((member) => (
-                  <Avatar 
-                    key={member._id}
-                    sx={{ 
-                      bgcolor: onlineUsers.some(u => u.userId === member._id) ? 'success.main' : 'grey.500'
-                    }}
-                  >
-                    {member.name.charAt(0).toUpperCase()}
-                  </Avatar>
-                ))}
-              </AvatarGroup>
-              <Typography variant="caption" sx={{ color: 'white', opacity: 0.7 }}>
-                {onlineUsers.length}/{teamMembers.length} online
-              </Typography>
-            </Box>
-          </Box>
+        <div className="mt-auto p-4">
+          <div className="border-t border-white/20 pt-4 mb-4">
+            {/* Team Online Status */}
+            <div className="mb-4">
+              <p className="text-sm text-white/80 mb-2">
+                Team Online
+              </p>
+              <div className="flex items-center gap-2">
+                <div className="flex -space-x-2">
+                  {teamMembers.slice(0, 3).map((member) => (
+                    <div 
+                      key={member._id}
+                      className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-semibold text-white border-2 border-white ${
+                        onlineUsers.some(u => u.userId === member._id) ? 'bg-green-500' : 'bg-gray-500'
+                      }`}
+                    >
+                      {member.name.charAt(0).toUpperCase()}
+                    </div>
+                  ))}
+                </div>
+                <span className="text-xs text-white/70">
+                  {onlineUsers.length}/{teamMembers.length} online
+                </span>
+              </div>
+            </div>
 
-          {/* User Info and Logout */}
-          <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-            <Avatar
-              sx={{
-                bgcolor: '#10b981',
-                width: 40,
-                height: 40,
-                mr: 2
-              }}
+            {/* User Info and Logout */}
+            <div className="flex items-center mb-3">
+              <div className="w-10 h-10 rounded-full bg-green-500 flex items-center justify-center text-white font-semibold mr-3">
+                {user?.name?.charAt(0).toUpperCase()}
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-semibold text-white truncate">
+                  {user?.name}
+                </p>
+                <p className="text-xs text-white/80 truncate">
+                  {user?.email}
+                </p>
+              </div>
+            </div>
+            <button
+              onClick={logout}
+              className="w-full flex items-center gap-2 px-4 py-2 text-white hover:bg-white/10 rounded-lg transition-colors"
             >
-              {user?.name?.charAt(0).toUpperCase()}
-            </Avatar>
-            <Box>
-              <Typography variant="body1" fontWeight="600">
-                {user?.name}
-              </Typography>
-              <Typography variant="body2" sx={{ opacity: 0.8 }}>
-                {user?.email}
-              </Typography>
-            </Box>
-          </Box>
-          <Button
-            startIcon={<Logout />}
-            onClick={logout}
-            sx={{
-              color: 'white',
-              width: '100%',
-              justifyContent: 'flex-start',
-              pl: 2,
-              '&:hover': {
-                backgroundColor: 'rgba(255, 255, 255, 0.1)',
-              },
-            }}
-          >
-            Logout
-          </Button>
-        </Box>
-      </Drawer>
+              <FiLogOut /> Logout
+            </button>
+          </div>
+        </div>
+      </div>
 
       {/* Main Content */}
-      <Box sx={{ flexGrow: 1, width: 'calc(100% - 280px)', overflow: 'auto' }}>
-        <AppBar 
-          position="static" 
-          elevation={0}
-          sx={{ 
-            backgroundColor: 'background.paper', 
-            color: 'text.primary',
-            borderBottom: '1px solid',
-            borderColor: 'divider'
-          }}
-        >
-          <Toolbar>
-            <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
+      <div className="flex-1 ml-[280px] w-[calc(100%-280px)] overflow-auto">
+        <header className="bg-white dark:bg-slate-800 border-b border-gray-200 dark:border-gray-700 sticky top-0 z-10">
+          <div className="px-6 py-4 flex items-center justify-between">
+            <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
               {getSectionTitle()}
-            </Typography>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-              <IconButton onClick={toggleDarkMode} color="inherit">
-                {darkMode ? <Brightness7 /> : <Brightness4 />}
-              </IconButton>
-              <Typography variant="body2" color="text.secondary">
+            </h2>
+            <div className="flex items-center gap-4">
+              <button 
+                onClick={toggleDarkMode}
+                className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+              >
+                {darkMode ? <FiSun className="w-5 h-5" /> : <FiMoon className="w-5 h-5" />}
+              </button>
+              <p className="text-sm text-gray-600 dark:text-gray-400">
                 Welcome back, {user?.name}!
-              </Typography>
-            </Box>
-          </Toolbar>
-        </AppBar>
+              </p>
+            </div>
+          </div>
+        </header>
         
-        <Box sx={{ mt: 4, pb: 4, px: 3, width: '100%', maxWidth: '100%', boxSizing: 'border-box' }}>
+        <div className="mt-8 pb-8 px-6 w-full max-w-full">
           {renderMainContent()}
-        </Box>
-      </Box>
-    </Box>
+        </div>
+      </div>
+    </div>
   );
 };
 

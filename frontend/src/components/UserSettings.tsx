@@ -1,29 +1,7 @@
 // teamflow/frontend/src/components/UserSettings.tsx
 import React, { useState } from 'react';
-import {
-  Box,
-  Typography,
-  TextField,
-  Button,
-  Alert,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogContentText,
-  DialogActions,
-  Avatar,
-  IconButton,
-  Card,
-  CardContent
-} from '@mui/material';
-import {
-  Lock,
-  Person,
-  DeleteForever,
-  Edit,
-  Save,
-  Cancel
-} from '@mui/icons-material';
+import { Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions, Button } from '@mui/material';
+import { FiLock, FiUser, FiTrash2, FiEdit2, FiSave, FiX } from 'react-icons/fi';
 import { useAuth } from '../context/AuthContext';
 
 const UserSettings: React.FC = () => {
@@ -143,169 +121,157 @@ const UserSettings: React.FC = () => {
   };
 
   return (
-    <Box sx={{ maxWidth: 800, mx: 'auto' }}>
-      <Typography variant="h4" gutterBottom fontWeight="700">
+    <div className="max-w-4xl mx-auto">
+      <h1 className="text-3xl font-bold mb-2">
         {user?.name}'s Settings
-      </Typography>
-      <Typography variant="body1" color="textSecondary" sx={{ mb: 4 }}>
+      </h1>
+      <p className="text-gray-600 dark:text-gray-400 mb-6">
         Manage your account settings and preferences
-      </Typography>
+      </p>
 
       {error && (
-        <Alert severity="error" sx={{ mb: 3 }} onClose={() => setError('')}>
+        <div className="mb-4 p-4 bg-red-100 dark:bg-red-900/20 border border-red-300 dark:border-red-800 rounded-lg text-red-700 dark:text-red-300 flex justify-between items-center">
           {error}
-        </Alert>
+          <button onClick={() => setError('')} className="text-red-700 dark:text-red-300">×</button>
+        </div>
       )}
 
       {success && (
-        <Alert severity="success" sx={{ mb: 3 }} onClose={() => setSuccess('')}>
+        <div className="mb-4 p-4 bg-green-100 dark:bg-green-900/20 border border-green-300 dark:border-green-800 rounded-lg text-green-700 dark:text-green-300 flex justify-between items-center">
           {success}
-        </Alert>
+          <button onClick={() => setSuccess('')} className="text-green-700 dark:text-green-300">×</button>
+        </div>
       )}
 
       {/* Profile Section */}
-      <Card sx={{ mb: 3 }}>
-        <CardContent>
-          <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
-            <Box display="flex" alignItems="center" gap={2}>
-              <Person color="primary" />
-              <Typography variant="h6" fontWeight="600">
-                Profile Information
-              </Typography>
-            </Box>
-            {!editMode ? (
-              <IconButton onClick={() => setEditMode(true)} color="primary">
-                <Edit />
-              </IconButton>
-            ) : (
-              <IconButton onClick={() => setEditMode(false)}>
-                <Cancel />
-              </IconButton>
-            )}
-          </Box>
+      <div className="card mb-4">
+        <div className="flex justify-between items-center mb-4">
+          <div className="flex items-center gap-2">
+            <FiUser className="text-primary-500 w-5 h-5" />
+            <h2 className="text-xl font-semibold">Profile Information</h2>
+          </div>
+          {!editMode ? (
+            <button onClick={() => setEditMode(true)} className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg">
+              <FiEdit2 className="w-5 h-5 text-primary-500" />
+            </button>
+          ) : (
+            <button onClick={() => setEditMode(false)} className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg">
+              <FiX className="w-5 h-5" />
+            </button>
+          )}
+        </div>
 
-          <Box display="flex" alignItems="center" gap={3} mb={3}>
-            <Avatar
-              sx={{
-                bgcolor: '#10b981',
-                width: 80,
-                height: 80,
-                fontSize: '2rem'
-              }}
-            >
-              {user?.name?.charAt(0).toUpperCase()}
-            </Avatar>
-            <Box>
-              <Typography variant="h6">{user?.name}</Typography>
-              <Typography variant="body2" color="textSecondary">
-                {user?.email}
-              </Typography>
-            </Box>
-          </Box>
+        <div className="flex items-center gap-4 mb-4">
+          <div className="w-20 h-20 rounded-full bg-green-500 flex items-center justify-center text-white text-3xl font-bold">
+            {user?.name?.charAt(0).toUpperCase()}
+          </div>
+          <div>
+            <h3 className="text-xl font-semibold">{user?.name}</h3>
+            <p className="text-gray-600 dark:text-gray-400">{user?.email}</p>
+          </div>
+        </div>
 
-          {editMode ? (
-            <Box component="form" onSubmit={handleProfileUpdate}>
-              <TextField
-                fullWidth
-                label="Name"
+        {editMode && (
+          <form onSubmit={handleProfileUpdate}>
+            <div className="mb-4">
+              <label className="block text-sm font-medium mb-2">Name</label>
+              <input
+                type="text"
                 value={profileForm.name}
                 onChange={(e) => setProfileForm({ ...profileForm, name: e.target.value })}
-                margin="normal"
+                className="input-field"
                 required
               />
-              <TextField
-                fullWidth
-                label="Email"
+            </div>
+            <div className="mb-4">
+              <label className="block text-sm font-medium mb-2">Email</label>
+              <input
                 type="email"
                 value={profileForm.email}
                 onChange={(e) => setProfileForm({ ...profileForm, email: e.target.value })}
-                margin="normal"
+                className="input-field"
                 required
               />
-              <Box mt={2} display="flex" gap={2} justifyContent="flex-end">
-                <Button onClick={() => setEditMode(false)}>
-                  Cancel
-                </Button>
-                <Button type="submit" variant="contained" startIcon={<Save />}>
-                  Save Changes
-                </Button>
-              </Box>
-            </Box>
-          ) : null}
-        </CardContent>
-      </Card>
+            </div>
+            <div className="flex gap-2 justify-end">
+              <button type="button" onClick={() => setEditMode(false)} className="btn-outline">
+                Cancel
+              </button>
+              <button type="submit" className="btn-primary flex items-center gap-2">
+                <FiSave className="w-4 h-4" />
+                Save Changes
+              </button>
+            </div>
+          </form>
+        )}
+      </div>
 
       {/* Change Password Section */}
-      <Card sx={{ mb: 3 }}>
-        <CardContent>
-          <Box display="flex" alignItems="center" gap={2} mb={3}>
-            <Lock color="primary" />
-            <Typography variant="h6" fontWeight="600">
-              Change Password
-            </Typography>
-          </Box>
+      <div className="card mb-4">
+        <div className="flex items-center gap-2 mb-4">
+          <FiLock className="text-primary-500 w-5 h-5" />
+          <h2 className="text-xl font-semibold">Change Password</h2>
+        </div>
 
-          <Box component="form" onSubmit={handlePasswordChange}>
-            <TextField
-              fullWidth
-              label="Current Password"
+        <form onSubmit={handlePasswordChange}>
+          <div className="mb-4">
+            <label className="block text-sm font-medium mb-2">Current Password</label>
+            <input
               type="password"
               value={passwordForm.currentPassword}
               onChange={(e) => setPasswordForm({ ...passwordForm, currentPassword: e.target.value })}
-              margin="normal"
+              className="input-field"
               required
             />
-            <TextField
-              fullWidth
-              label="New Password"
+          </div>
+          <div className="mb-4">
+            <label className="block text-sm font-medium mb-2">New Password</label>
+            <input
               type="password"
               value={passwordForm.newPassword}
               onChange={(e) => setPasswordForm({ ...passwordForm, newPassword: e.target.value })}
-              margin="normal"
+              className="input-field"
               required
             />
-            <TextField
-              fullWidth
-              label="Confirm New Password"
+          </div>
+          <div className="mb-4">
+            <label className="block text-sm font-medium mb-2">Confirm New Password</label>
+            <input
               type="password"
               value={passwordForm.confirmPassword}
               onChange={(e) => setPasswordForm({ ...passwordForm, confirmPassword: e.target.value })}
-              margin="normal"
+              className="input-field"
               required
             />
-            <Box mt={2} display="flex" justifyContent="flex-end">
-              <Button type="submit" variant="contained" startIcon={<Lock />}>
-                Update Password
-              </Button>
-            </Box>
-          </Box>
-        </CardContent>
-      </Card>
+          </div>
+          <div className="flex justify-end">
+            <button type="submit" className="btn-primary flex items-center gap-2">
+              <FiLock className="w-4 h-4" />
+              Update Password
+            </button>
+          </div>
+        </form>
+      </div>
 
       {/* Danger Zone */}
-      <Card sx={{ mb: 3, border: '1px solid', borderColor: 'error.main' }}>
-        <CardContent>
-          <Box display="flex" alignItems="center" gap={2} mb={2}>
-            <DeleteForever color="error" />
-            <Typography variant="h6" fontWeight="600" color="error">
-              Danger Zone
-            </Typography>
-          </Box>
+      <div className="card border-2 border-red-500 dark:border-red-700 mb-4">
+        <div className="flex items-center gap-2 mb-3">
+          <FiTrash2 className="text-red-500 w-5 h-5" />
+          <h2 className="text-xl font-semibold text-red-500">Danger Zone</h2>
+        </div>
 
-          <Typography variant="body2" color="textSecondary" sx={{ mb: 2 }}>
-            Once you delete your account, there is no going back. Please be certain.
-          </Typography>
+        <p className="text-gray-600 dark:text-gray-400 mb-3">
+          Once you delete your account, there is no going back. Please be certain.
+        </p>
 
-          <Button
-            variant="outlined"
-            color="error"
-            startIcon={<DeleteForever />}
-            onClick={() => setDeleteDialogOpen(true)}
-          >
-            Delete Account
-          </Button>
-        </CardContent>
-      </Card>
+        <button
+          onClick={() => setDeleteDialogOpen(true)}
+          className="px-4 py-2 border-2 border-red-500 text-red-500 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 flex items-center gap-2"
+        >
+          <FiTrash2 className="w-4 h-4" />
+          Delete Account
+        </button>
+      </div>
 
       {/* Delete Confirmation Dialog */}
       <Dialog
@@ -328,7 +294,7 @@ const UserSettings: React.FC = () => {
           </Button>
         </DialogActions>
       </Dialog>
-    </Box>
+    </div>
   );
 };
 

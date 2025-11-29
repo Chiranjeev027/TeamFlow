@@ -1,6 +1,5 @@
 // teamflow/frontend/src/components/TaskColumn.tsx
 import React from 'react';
-import { Paper, Typography, Box, Chip } from '@mui/material';
 import TaskCard from './TaskCard';
 import type { Task } from '../types';
 
@@ -28,42 +27,24 @@ const TaskColumn: React.FC<TaskColumnProps> = ({
   onDragStart
 }) => {
   return (
-    <Paper
-      elevation={1}
-      sx={{
-        p: 2,
-        minHeight: '100%',
-        backgroundColor: 'background.paper', // CHANGED: Use theme paper color
-        border: '1px solid',
-        borderColor: 'divider' // CHANGED: Use theme divider color
-      }}
+    <div
+      className="card p-4 min-h-full border border-gray-200 dark:border-gray-700"
       onDragOver={onDragOver}
       onDrop={(e) => onDrop(e, status)}
     >
-      <Typography 
-        variant="h6" 
-        sx={{ 
-          color: color,
-          mb: 2,
-          display: 'flex',
-          alignItems: 'center',
-          gap: 1
-        }}
+      <h2 
+        className="text-lg font-semibold mb-4 flex items-center gap-2"
+        style={{ color }}
       >
-        <Box
-          sx={{
-            width: 12,
-            height: 12,
-            borderRadius: '50%',
-            backgroundColor: color
-          }}
+        <div
+          className="w-3 h-3 rounded-full"
+          style={{ backgroundColor: color }}
         />
         {title} 
-        <Chip 
-          label={tasks.length} 
-          size="small" 
-        />
-      </Typography>
+        <span className="ml-auto px-2 py-1 bg-gray-100 dark:bg-gray-700 rounded-full text-sm">
+          {tasks.length}
+        </span>
+      </h2>
       
       {tasks.map((task) => (
         <div
@@ -77,7 +58,7 @@ const TaskColumn: React.FC<TaskColumnProps> = ({
           />
         </div>
       ))}
-    </Paper>
+    </div>
   );
 };
 

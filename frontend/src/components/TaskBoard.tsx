@@ -1,17 +1,10 @@
 // teamflow/frontend/src/components/TaskBoard.tsx
 import React, { useState, useEffect, useRef } from 'react';
 import {
-  Box,
-  Typography,
-  Button,
-  TextField,
   Dialog,
-  Alert,
-  // CircularProgress (replaced by Skeleton)
-  Skeleton,
-  Fab
+  Alert
 } from '@mui/material';
-import { Add, Groups } from '@mui/icons-material';
+import { FiPlus, FiUsers, FiSearch } from 'react-icons/fi';
 import { useParams } from 'react-router-dom';
 import { useSocket } from '../context/SocketContext';
 import { useAuth } from '../context/AuthContext';
@@ -263,115 +256,157 @@ const TaskBoard: React.FC = () => {
   // Loading and error states
   if (loading) {
     return (
-      <Box display="flex" justifyContent="center" alignItems="center" minHeight="400px" flexDirection="column" gap={2}>
-        <Skeleton variant="rectangular" width="60%" height={40} sx={{ borderRadius: 1 }} />
-        <Box sx={{ display: 'flex', gap: 2, width: '100%', mt: 2 }}>
-          <Skeleton variant="rectangular" width="100%" height={400} sx={{ borderRadius: 2 }} />
-        </Box>
-      </Box>
+      <div className="flex justify-center items-center min-h-[400px] flex-col gap-4">
+        <div className="w-3/5 h-10 bg-gray-200 dark:bg-gray-700 animate-pulse rounded"></div>
+        <div className="flex gap-4 w-full mt-4">
+          <div className="flex-1 h-96 bg-gray-200 dark:bg-gray-700 animate-pulse rounded-xl"></div>
+          <div className="flex-1 h-96 bg-gray-200 dark:bg-gray-700 animate-pulse rounded-xl"></div>
+          <div className="flex-1 h-96 bg-gray-200 dark:bg-gray-700 animate-pulse rounded-xl"></div>
+        </div>
+      </div>
     );
   }
 
   if (!project) {
     return (
-      <Box textAlign="center" py={6}>
-        <Typography variant="h6" color="textSecondary">Project not found</Typography>
-      </Box>
+      <div className="text-center py-12">
+        <h2 className="text-xl text-gray-600 dark:text-gray-400">Project not found</h2>
+      </div>
     );
   }
 
   return (
     <>
-    <Box sx={{ width: '100%' }}>
+    <div className="w-full">
       {/* Header */}
-      <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
-        <Box>
-          <Typography variant="h4">{project.name}</Typography>
-          <Typography color="textSecondary">{project.description}</Typography>
-        </Box>
-        <Box display="flex" gap={2} alignItems="center">
-          <Button
-            variant={isOwner ? "contained" : "outlined"}
-            startIcon={<Groups />}
+      <div className="flex justify-between items-center mb-6">
+        <div>
+          <h1 className="text-3xl font-bold">{project.name}</h1>
+          <p className="text-gray-600 dark:text-gray-400">{project.description}</p>
+        </div>
+        <div className="flex gap-3 items-center">
+          <button
             onClick={() => setTeamDialogOpen(true)}
-            sx={{ position: 'relative' }}
-            color={isOwner ? "primary" : "inherit"}
+            className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-colors relative ${
+              isOwner 
+                ? 'btn-primary' 
+                : 'btn-outline'
+            }`}
           >
+            <FiUsers />
             {isOwner ? "Invite Team" : "View Team"} ({getTeamCount()})
             {isOwner && getTeamCount() === 1 && (
-              <Box sx={{ position: 'absolute', top: -8, right: -8, width: 16, height: 16, borderRadius: '50%', bgcolor: 'warning.main', color: 'white', fontSize: '0.7rem', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <span className="absolute -top-2 -right-2 w-4 h-4 rounded-full bg-amber-500 text-white text-xs flex items-center justify-center">
                 +
-              </Box>
+              </span>
             )}
-          </Button>
-          <Button variant="contained" startIcon={<Add />} onClick={() => setCreateDialogOpen(true)}>
-            Add Task
-          </Button>
-        </Box>
-      </Box>
+          </button>
+          <button 
+            className="btn-primary flex items-center gap-2"
+            onClick={() => setCreateDialogOpen(true)}
+          >
+            <FiPlus /> Add Task
+          </button>
+        </div>
+      </div>
 
       {/* User Presence & Quick Filters */}
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-4">
+        <div className="flex flex-wrap items-center gap-2">
           {projectId && <UserPresence projectId={projectId} />}
-          <Box sx={{ display: 'flex', gap: 1 }}>
-            <Button variant={filters.myTasks ? 'contained' : 'outlined'} onClick={() => setFilters(prev => ({ ...prev, myTasks: !prev.myTasks }))}>My Tasks</Button>
-            <Button variant={filters.highPriority ? 'contained' : 'outlined'} onClick={() => setFilters(prev => ({ ...prev, highPriority: !prev.highPriority }))}>High Priority</Button>
-            <Button variant={filters.overdue ? 'contained' : 'outlined'} onClick={() => setFilters(prev => ({ ...prev, overdue: !prev.overdue }))}>Overdue</Button>
-            <Button variant={filters.unassigned ? 'contained' : 'outlined'} onClick={() => setFilters(prev => ({ ...prev, unassigned: !prev.unassigned }))}>Unassigned</Button>
-          </Box>
-        </Box>
-        <TextField
-          inputRef={searchRef}
-          size="small"
-          placeholder="Search tasks..."
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          sx={{ width: { xs: '100%', sm: 320 } }}
-        />
-      </Box>
+          <div className="flex gap-2">
+            <button 
+              onClick={() => setFilters(prev => ({ ...prev, myTasks: !prev.myTasks }))}
+              className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
+                filters.myTasks 
+                  ? 'bg-primary-500 text-white' 
+                  : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
+              }`}
+            >
+              My Tasks
+            </button>
+            <button 
+              onClick={() => setFilters(prev => ({ ...prev, highPriority: !prev.highPriority }))}
+              className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
+                filters.highPriority 
+                  ? 'bg-primary-500 text-white' 
+                  : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
+              }`}
+            >
+              High Priority
+            </button>
+            <button 
+              onClick={() => setFilters(prev => ({ ...prev, overdue: !prev.overdue }))}
+              className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
+                filters.overdue 
+                  ? 'bg-primary-500 text-white' 
+                  : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
+              }`}
+            >
+              Overdue
+            </button>
+            <button 
+              onClick={() => setFilters(prev => ({ ...prev, unassigned: !prev.unassigned }))}
+              className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
+                filters.unassigned 
+                  ? 'bg-primary-500 text-white' 
+                  : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
+              }`}
+            >
+              Unassigned
+            </button>
+          </div>
+        </div>
+        <div className="relative w-full md:w-80">
+          <FiSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+          <input
+            ref={searchRef}
+            type="text"
+            placeholder="Search tasks..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="w-full pl-10 pr-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-slate-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500"
+          />
+        </div>
+      </div>
 
       {/* Alerts */}
       {getTeamCount() === 1 && (
         <Alert severity="info" sx={{ mb: 2 }}>
-          <Typography variant="body2">
-            <strong>Want to collaborate?</strong> Click "Team" to invite members to this project.
-          </Typography>
+          <strong>Want to collaborate?</strong> Click "Team" to invite members to this project.
         </Alert>
       )}
 
-      {error && <Alert severity="error" sx={{ mb: 2 }} onClose={() => setError('')}>{error}</Alert>}
+      {error && (
+        <Alert severity="error" sx={{ mb: 2 }} onClose={() => setError('')}>
+          {error}
+        </Alert>
+      )}
 
       {/* Task Columns */}
-      <Box sx={{ 
-        display: 'flex', 
-        flexDirection: { xs: 'column', md: 'row' },
-        gap: 3, 
-        minHeight: '600px' 
-      }}>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 min-h-[600px]">
         {columns.map((column) => (
-          <Box key={column.id} sx={{ flex: 1, minWidth: 0 }}>
-            <TaskColumn
-              title={column.title}
-              color={column.color}
-              tasks={tasks
-                .filter(task => task.status === column.id)
-                .filter(task => !filters.myTasks || (task.assignee && task.assignee._id === user?.id))
-                .filter(task => !filters.highPriority || task.priority === 'high')
-                .filter(task => !filters.overdue || (task.dueDate && new Date(task.dueDate) < new Date()))
-                .filter(task => !filters.unassigned || !task.assignee)
-                .filter(task => !searchTerm || task.title.toLowerCase().includes(searchTerm.toLowerCase()) || task.description?.toLowerCase().includes(searchTerm.toLowerCase()))
-              }
-              status={column.id as 'todo' | 'in-progress' | 'done'}
-              onEditTask={openEditDialog}
-              onDeleteTask={deleteTask}
-              onDragOver={handleDragOver}
-              onDrop={handleDrop}
-              onDragStart={handleDragStart}
-            />
-          </Box>
+          <TaskColumn
+            key={column.id}
+            title={column.title}
+            color={column.color}
+            tasks={tasks
+              .filter(task => task.status === column.id)
+              .filter(task => !filters.myTasks || (task.assignee && task.assignee._id === user?.id))
+              .filter(task => !filters.highPriority || task.priority === 'high')
+              .filter(task => !filters.overdue || (task.dueDate && new Date(task.dueDate) < new Date()))
+              .filter(task => !filters.unassigned || !task.assignee)
+              .filter(task => !searchTerm || task.title.toLowerCase().includes(searchTerm.toLowerCase()) || task.description?.toLowerCase().includes(searchTerm.toLowerCase()))
+            }
+            status={column.id as 'todo' | 'in-progress' | 'done'}
+            onEditTask={openEditDialog}
+            onDeleteTask={deleteTask}
+            onDragOver={handleDragOver}
+            onDrop={handleDrop}
+            onDragStart={handleDragStart}
+          />
         ))}
-      </Box>
+      </div>
 
       {/* Dialogs */}
       <Dialog open={createDialogOpen} onClose={() => setCreateDialogOpen(false)} maxWidth="sm" fullWidth>
@@ -410,16 +445,15 @@ const TaskBoard: React.FC = () => {
         onClose={() => setTeamDialogOpen(false)}
         onTeamUpdate={fetchProjectData}
       />
-    </Box>
+    </div>
       {/* Floating Add Task Button */}
-      <Fab
-        color="primary"
-        aria-label="add task"
-        sx={{ position: 'fixed', bottom: 24, right: 24 }}
+      <button
         onClick={() => setCreateDialogOpen(true)}
+        className="fixed bottom-6 right-6 w-14 h-14 bg-primary-500 hover:bg-primary-600 text-white rounded-full shadow-lg flex items-center justify-center transition-all hover:scale-110"
+        aria-label="add task"
       >
-        <Add />
-      </Fab>
+        <FiPlus className="w-6 h-6" />
+      </button>
     </>
   );
 };
