@@ -23,15 +23,16 @@ import {
   Switch,
   FormControlLabel
 } from '@mui/material';
-import { PersonAdd, PersonRemove, Close, Wifi, WifiOff } from '@mui/icons-material';
+import { PersonAdd, PersonRemove, Close, Wifi, WifiOff, RemoveCircleOutline } from '@mui/icons-material';
 import { useAuth } from '../context/AuthContext';
-import { useSocket } from '../context/SocketContext'; // ADD THIS IMPORT
+import { useSocket } from '../context/SocketContext';
 
 interface TeamMember {
   _id: string;
   name: string;
   email: string;
   isOnline?: boolean;
+  status?: 'online' | 'busy' | 'offline';
   lastSeen?: string;
 }
 
@@ -44,7 +45,7 @@ interface TeamManagementProps {
 
 const TeamManagement: React.FC<TeamManagementProps> = ({ projectId, open, onClose, onTeamUpdate }) => {
   const { user } = useAuth();
-  const socket = useSocket(); // ADD SOCKET HOOK
+  const { onlineUsers } = useSocket(); // Use centralized online users
   const [email, setEmail] = useState('');
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
@@ -54,94 +55,57 @@ const TeamManagement: React.FC<TeamManagementProps> = ({ projectId, open, onClos
     members: TeamMember[];
   } | null>(null);
   const [showOnlyOnline, setShowOnlyOnline] = useState(false);
-  const [onlineUserIds, setOnlineUserIds] = useState<Set<string>>(new Set()); // ADD ONLINE TRACKING
 
   const fetchTeam = async () => {
     try {
-      console.log('🔄 Fetching team for project:', projectId);
       const token = localStorage.getItem('token');
       const response = await fetch(`/api/projects/${projectId}/members`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
       });
-      
+
       if (!response.ok) {
         const errorText = await response.text();
         throw new Error(errorText || 'Failed to fetch team');
       }
-      
+
       const data = await response.json();
-      console.log('✅ Team data received:', data);
-      
-      // Enhance team data with online status from socket
-      const enhancedData = {
-        owner: {
-          ...data.owner,
-          isOnline: onlineUserIds.has(data.owner._id)
-        },
-        members: data.members.map((member: TeamMember) => ({
-          ...member,
-          isOnline: onlineUserIds.has(member._id)
-        }))
-      };
-      
-      setTeam(enhancedData);
+      setTeam(data);
     } catch (error: any) {
       console.error('💥 Error fetching team:', error);
       setError(error.message);
     }
   };
 
-  // Listen for real-time online users updates
-  useEffect(() => {
-    if (socket && open && projectId) {
-      console.log('🔌 TeamManagement: Setting up socket listeners');
-      
-      const handleOnlineUsers = (users: any[]) => {
-        console.log('👥 TeamManagement: Online users update', users);
-        const newOnlineIds = new Set(users.map((u: any) => u.userId));
-        setOnlineUserIds(newOnlineIds);
-        
-        // Update team with new online status
-        if (team) {
-          setTeam({
-            owner: {
-              ...team.owner,
-              isOnline: newOnlineIds.has(team.owner._id)
-            },
-            members: team.members.map(member => ({
-              ...member,
-              isOnline: newOnlineIds.has(member._id)
-            }))
-          });
-        }
-      };
-
-      socket.on('online-users', handleOnlineUsers);
-      
-      // Request current online users
-      socket.emit('user-joined', {
-        projectId,
-        user: {
-          userId: user?.id,
-          name: user?.name,
-          email: user?.email
-        }
-      });
-
-      return () => {
-        console.log('🔌 TeamManagement: Cleaning up socket listeners');
-        socket.off('online-users', handleOnlineUsers);
-      };
-    }
-  }, [socket, open, projectId, team, user]);
-
   useEffect(() => {
     if (open && projectId) {
       fetchTeam();
     }
   }, [open, projectId]);
+
+  // Merge real-time status
+  const teamWithStatus = React.useMemo(() => {
+    if (!team) return null;
+
+    const getStatus = (userId: string) => {
+      const onlineUser = onlineUsers.find(u => u.userId === userId);
+      return onlineUser ? (onlineUser.status || 'online') : 'offline';
+    };
+
+    return {
+      owner: {
+        ...team.owner,
+        status: getStatus(team.owner._id),
+        isOnline: getStatus(team.owner._id) !== 'offline'
+      },
+      members: team.members.map(member => ({
+        ...member,
+        status: getStatus(member._id),
+        isOnline: getStatus(member._id) !== 'offline'
+      }))
+    };
+  }, [team, onlineUsers]);
 
   const inviteMember = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -159,7 +123,7 @@ const TeamManagement: React.FC<TeamManagementProps> = ({ projectId, open, onClos
         },
         body: JSON.stringify({ email })
       });
-      
+
       if (!response.ok) {
         const data = await response.json();
         throw new Error(data.error);
@@ -189,7 +153,7 @@ const TeamManagement: React.FC<TeamManagementProps> = ({ projectId, open, onClos
           'Authorization': `Bearer ${token}`
         }
       });
-      
+
       if (!response.ok) {
         const data = await response.json();
         throw new Error(data.error);
@@ -206,15 +170,42 @@ const TeamManagement: React.FC<TeamManagementProps> = ({ projectId, open, onClos
   const isOwner = team?.owner?._id?.toString() === user?.id?.toString();
 
   // Filter members based on online status
-  const filteredMembers = team?.members.filter(member => 
-    showOnlyOnline ? member.isOnline : true
+  const filteredMembers = teamWithStatus?.members.filter(member =>
+    showOnlyOnline ? member.status !== 'offline' : true
   ) || [];
 
   // Calculate correct team count
-  const teamMembersCount = team ? 1 + team.members.filter(member => member._id !== team.owner._id).length : 0;
-  const onlineCount = team ? 
-    (team.owner.isOnline ? 1 : 0) + team.members.filter(member => member._id !== team.owner._id && member.isOnline).length 
+  const teamMembersCount = teamWithStatus ? 1 + teamWithStatus.members.filter(member => member._id !== teamWithStatus.owner._id).length : 0;
+  const onlineCount = teamWithStatus ?
+    (teamWithStatus.owner.status !== 'offline' ? 1 : 0) + teamWithStatus.members.filter(member => member._id !== teamWithStatus.owner._id && member.status !== 'offline').length
     : 0;
+
+  const getStatusColor = (status?: string) => {
+    switch (status) {
+      case 'online': return 'success';
+      case 'busy': return 'warning';
+      case 'offline': return 'default';
+      default: return 'default';
+    }
+  };
+
+  const getStatusIcon = (status?: string) => {
+    switch (status) {
+      case 'online': return <Wifi />;
+      case 'busy': return <RemoveCircleOutline />;
+      case 'offline': return <WifiOff />;
+      default: return <WifiOff />;
+    }
+  };
+
+  const getStatusLabel = (status?: string) => {
+    switch (status) {
+      case 'online': return 'Online';
+      case 'busy': return 'Busy';
+      case 'offline': return 'Offline';
+      default: return 'Offline';
+    }
+  };
 
   return (
     <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
@@ -228,19 +219,10 @@ const TeamManagement: React.FC<TeamManagementProps> = ({ projectId, open, onClos
           </IconButton>
         </Box>
       </DialogTitle>
-      
+
       <DialogContent>
         {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
         {success && <Alert severity="success" sx={{ mb: 2 }}>{success}</Alert>}
-
-        {/* Debug info */}
-        {import.meta.env.DEV && (
-          <Alert severity="info" sx={{ mb: 2 }}>
-            <Typography variant="body2">
-              <strong>Debug:</strong> Online users: {onlineUserIds.size} | Socket: {socket?.connected ? 'Connected' : 'Disconnected'}
-            </Typography>
-          </Alert>
-        )}
 
         {/* Invite Member Section */}
         {isOwner && (
@@ -279,7 +261,7 @@ const TeamManagement: React.FC<TeamManagementProps> = ({ projectId, open, onClos
           <Typography variant="h6">
             Team Members ({showOnlyOnline ? onlineCount : teamMembersCount})
           </Typography>
-          
+
           <FormControlLabel
             control={
               <Switch
@@ -293,75 +275,75 @@ const TeamManagement: React.FC<TeamManagementProps> = ({ projectId, open, onClos
           />
         </Box>
 
-        {team && (
+        {teamWithStatus && (
           <List>
             {/* Project Owner */}
-            {(!showOnlyOnline || team.owner.isOnline) && (
+            {(!showOnlyOnline || teamWithStatus.owner.status !== 'offline') && (
               <ListItem>
                 <ListItemAvatar>
                   <Avatar sx={{ bgcolor: 'primary.main' }}>
-                    {team.owner.name.charAt(0).toUpperCase()}
+                    {teamWithStatus.owner.name.charAt(0).toUpperCase()}
                   </Avatar>
                 </ListItemAvatar>
                 <ListItemText
                   primary={
                     <Box display="flex" alignItems="center" gap={1}>
-                      {team.owner.name}
+                      {teamWithStatus.owner.name}
                       <Chip label="Owner" size="small" color="primary" />
-                      <Chip 
-                        label={team.owner.isOnline ? "Online" : "Offline"} 
-                        size="small" 
-                        color={team.owner.isOnline ? "success" : "default"} 
+                      <Chip
+                        label={getStatusLabel(teamWithStatus.owner.status)}
+                        size="small"
+                        color={getStatusColor(teamWithStatus.owner.status) as any}
                         variant="outlined"
-                        icon={team.owner.isOnline ? <Wifi /> : <WifiOff />}
+                        icon={getStatusIcon(teamWithStatus.owner.status)}
                       />
                     </Box>
                   }
-                  secondary={team.owner.email}
+                  secondary={teamWithStatus.owner.email}
                 />
               </ListItem>
             )}
 
             {/* Team Members */}
             {filteredMembers
-              .filter(member => member._id !== team.owner._id)
+              .filter(member => member._id !== teamWithStatus.owner._id)
               .map((member) => (
-              <ListItem key={member._id}>
-                <ListItemAvatar>
-                  <Avatar sx={{ bgcolor: 'secondary.main' }}>
-                    {member.name.charAt(0).toUpperCase()}
-                  </Avatar>
-                </ListItemAvatar>
-                <ListItemText
-                  primary={
-                    <Box display="flex" alignItems="center" gap={1}>
-                      {member.name}
-                      <Chip 
-                        label={member.isOnline ? "Online" : "Offline"} 
-                        size="small" 
-                        color={member.isOnline ? "success" : "default"} 
-                        variant="outlined"
-                        icon={member.isOnline ? <Wifi /> : <WifiOff />}
-                      />
-                    </Box>
-                  }
-                  secondary={member.email}
-                />
-                {isOwner && (
-                  <ListItemSecondaryAction>
-                    <IconButton 
-                      edge="end" 
-                      onClick={() => removeMember(member._id)}
-                      color="error"
-                    >
-                      <PersonRemove />
-                    </IconButton>
-                  </ListItemSecondaryAction>
-                )}
-              </ListItem>
-            ))}
+                <ListItem key={member._id}>
+                  <ListItemAvatar>
+                    <Avatar sx={{ bgcolor: 'secondary.main' }}>
+                      {member.name.charAt(0).toUpperCase()}
+                    </Avatar>
+                  </ListItemAvatar>
+                  <ListItemText
+                    primary={
+                      <Box display="flex" alignItems="center" gap={1}>
+                        {member.name}
+                        <Chip
+                          label={getStatusLabel(member.status)}
+                          size="small"
+                          color={getStatusColor(member.status) as any}
+                          variant="outlined"
+                          icon={getStatusIcon(member.status)}
+                        />
+                      </Box>
+                    }
+                    secondary={member.email}
+                  />
+                  {isOwner && (
+                    <ListItemSecondaryAction>
+                      <IconButton
+                        edge="end"
+                        onClick={() => removeMember(member._id)}
+                        color="error"
+                      >
+                        <PersonRemove />
+                      </IconButton>
+                    </ListItemSecondaryAction>
+                  )}
+                </ListItem>
+              ))}
 
-            {filteredMembers.filter(member => member._id !== team.owner._id).length === 0 && (
+            {filteredMembers.filter(member => member._id !== teamWithStatus.owner._id).length === 0 && (
               <ListItem>
                 <ListItemText
                   primary={showOnlyOnline ? "No team members online" : "No team members yet"}
