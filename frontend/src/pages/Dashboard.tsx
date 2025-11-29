@@ -5,7 +5,6 @@ import {
   Toolbar,
   Typography,
   Button,
-  Container,
   Drawer,
   List,
   ListItem,
@@ -413,7 +412,7 @@ const Dashboard: React.FC<DashboardProps> = ({ toggleDarkMode, darkMode }) => {
   }
 
   return (
-    <Box sx={{ display: 'flex', minHeight: '100vh', backgroundColor: 'background.default' }}>
+    <Box sx={{ display: 'flex', minHeight: '100vh', backgroundColor: 'background.default', overflow: 'hidden' }}>
       {/* Sidebar */}
       <Drawer
         variant="permanent"
@@ -446,13 +445,13 @@ const Dashboard: React.FC<DashboardProps> = ({ toggleDarkMode, darkMode }) => {
               sx={{
                 borderRadius: 2,
                 mb: 1,
-                backgroundColor: activeSection === item.id ? 'rgba(255, 255, 255, 0.15)' : 'transparent',
               }}
             >
               <ListItemButton
                 onClick={() => setActiveSection(item.id)}
                 sx={{
                   borderRadius: 2,
+                  border: activeSection === item.id ? '2px solid rgba(255, 255, 255, 0.8)' : '2px solid transparent',
                   '&:hover': {
                     backgroundColor: 'rgba(255, 255, 255, 0.1)',
                   },
@@ -540,7 +539,7 @@ const Dashboard: React.FC<DashboardProps> = ({ toggleDarkMode, darkMode }) => {
       </Drawer>
 
       {/* Main Content */}
-      <Box sx={{ flexGrow: 1, ml: `${drawerWidth}px` }}>
+      <Box sx={{ flexGrow: 1, width: 'calc(100% - 280px)', overflow: 'auto' }}>
         <AppBar 
           position="static" 
           elevation={0}
@@ -566,9 +565,9 @@ const Dashboard: React.FC<DashboardProps> = ({ toggleDarkMode, darkMode }) => {
           </Toolbar>
         </AppBar>
         
-        <Container maxWidth="xl" sx={{ mt: 4, pb: 4 }}>
+        <Box sx={{ mt: 4, pb: 4, px: 3, width: '100%', maxWidth: '100%', boxSizing: 'border-box' }}>
           {renderMainContent()}
-        </Container>
+        </Box>
       </Box>
     </Box>
   );
