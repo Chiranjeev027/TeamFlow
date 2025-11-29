@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Box, Paper, Typography, List, ListItem, ListItemText } from '@mui/material';
+import { Paper, Typography, List, ListItem, ListItemText } from '@mui/material';
 import { useSocket } from '../context/SocketContext';
 
 interface Activity {
@@ -22,9 +22,9 @@ const ActivityFeed: React.FC<{ projectId: string }> = ({ projectId }) => {
     const handlers: Record<string, (...args: any[]) => void> = {
       'task-created': (task: any) => pushActivity(`Task '${task.title}' created`),
       'task-updated': (task: any) => pushActivity(`Task '${task.title}' updated`),
-      'task-deleted': (taskId: string) => pushActivity(`A task was deleted`),
-      'member-added': (data: any) => pushActivity(`Member added to the project`),
-      'member-removed': (data: any) => pushActivity(`Member removed from the project`),
+      'task-deleted': (_taskId: string) => pushActivity(`A task was deleted`),
+      'member-added': (_data: any) => pushActivity(`Member added to the project`),
+      'member-removed': (_data: any) => pushActivity(`Member removed from the project`),
     };
 
     Object.entries(handlers).forEach(([event, handler]) => socket.on(event, handler));

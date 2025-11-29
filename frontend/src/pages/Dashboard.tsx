@@ -1,4 +1,3 @@
-// teamflow/frontend/src/pages/Dashboard.tsx
 import React, { useState, useEffect } from 'react';
 import {
   Box,
@@ -16,7 +15,6 @@ import {
   Avatar,
   Divider,
   Paper,
-  Chip,
   Card,
   CardContent,
   IconButton,
@@ -40,6 +38,9 @@ import {
 } from '@mui/icons-material';
 import { useAuth } from '../context/AuthContext';
 import ProjectList from '../components/ProjectList';
+import TeamManagementSidebar from '../components/TeamManagementSidebar';
+import AnalyticsDashboard from '../components/AnalyticsDashboard';
+import UserSettings from '../components/UserSettings';
 
 const drawerWidth = 280;
 
@@ -64,34 +65,57 @@ interface TeamMember {
   isOnline?: boolean;
 }
 
+interface DashboardStats {
+  totalProjects: number;
+  totalTeamMembers: number;
+  activeProjects: number;
+  completedTasks: number;
+  completionRate: number;
+}
+
 const Dashboard: React.FC<DashboardProps> = ({ toggleDarkMode, darkMode }) => {
   const { user, logout } = useAuth();
+  // Not currently using navigate/location in this page
+  const [activeSection, setActiveSection] = useState('dashboard');
   const [loading, setLoading] = useState(true);
-  const [stats, setStats] = useState({
+  const [stats, setStats] = useState<DashboardStats>({
     totalProjects: 0,
     totalTeamMembers: 0,
     activeProjects: 0,
-    completedTasks: 0
+    completedTasks: 0,
+    completionRate: 0
   });
   const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
-  const [onlineUsers, setOnlineUsers] = useState<TeamMember[]>([]);
+  interface OnlineUser { userId: string; name: string; email?: string; projectId?: string }
+  const [onlineUsers, setOnlineUsers] = useState<OnlineUser[]>([]);
+
+  // Menu items with navigation
+  const menuItems = [
+    { id: 'dashboard', text: 'Dashboard', icon: <DashboardIcon /> },
+    { id: 'projects', text: 'Projects', icon: <Folder /> },
+    { id: 'team', text: 'Team', icon: <Groups /> },
+    { id: 'calendar', text: 'Calendar', icon: <CalendarMonth /> },
+    { id: 'analytics', text: 'Analytics', icon: <BarChart /> },
+    { id: 'settings', text: 'Settings', icon: <Settings /> },
+  ];
 
   const fetchDashboardData = async () => {
     try {
       const token = localStorage.getItem('token');
       
-      // Fetch projects to calculate stats
+      // Fetch projects
       const projectsResponse = await fetch('/api/projects', {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       
       if (!projectsResponse.ok) throw new Error('Failed to fetch projects');
-      const projects = await projectsResponse.json();
+      const projectsData = await projectsResponse.json();
+      // no long storing projects in state here; only calculate derived stats
 
       // Calculate unique team members across all projects
       const allTeamMembers = new Map();
       
-      projects.forEach((project: Project) => {
+      projectsData.forEach((project: Project) => {
         // Add owner
         if (!allTeamMembers.has(project.owner._id)) {
           allTeamMembers.set(project.owner._id, {
@@ -114,12 +138,44 @@ const Dashboard: React.FC<DashboardProps> = ({ toggleDarkMode, darkMode }) => {
       });
 
       const uniqueTeamMembers = Array.from(allTeamMembers.values());
-      
+
+      // Fetch analytics for completion rate
+      const projectIds = projectsData.map((p: Project) => p._id);
+      let totalCompletedTasks = 0;
+      let totalTasks = 0;
+
+      if (projectIds.length > 0) {
+        const analyticsResponse = await fetch('/api/projects/analytics/batch', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify({ projectIds })
+        });
+
+        if (analyticsResponse.ok) {
+          const analyticsData = await analyticsResponse.json();
+          
+          totalCompletedTasks = Object.values(analyticsData).reduce((sum: number, projectAnalytics: any) => 
+            sum + (projectAnalytics.completedTasks || 0), 0
+          );
+          
+          totalTasks = Object.values(analyticsData).reduce((sum: number, projectAnalytics: any) => 
+            sum + (projectAnalytics.totalTasks || 0), 0
+          );
+        }
+      }
+
+      const overallCompletionRate = totalTasks > 0 ? 
+        Math.round((totalCompletedTasks / totalTasks) * 100) : 0;
+
       setStats({
-        totalProjects: projects.length,
+        totalProjects: projectsData.length,
         totalTeamMembers: uniqueTeamMembers.length,
-        activeProjects: projects.length, // All projects considered active for now
-        completedTasks: 0 // We'll calculate this when we have task data
+        activeProjects: projectsData.length,
+        completedTasks: totalCompletedTasks,
+        completionRate: overallCompletionRate
       });
 
       setTeamMembers(uniqueTeamMembers);
@@ -131,18 +187,16 @@ const Dashboard: React.FC<DashboardProps> = ({ toggleDarkMode, darkMode }) => {
     }
   };
 
-  // Fetch online users from all projects (you'll need to implement this endpoint)
   const fetchOnlineUsers = async () => {
     try {
       const token = localStorage.getItem('token');
-      // This would be a new endpoint that returns currently online users across user's projects
       const response = await fetch('/api/users/online', {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       
       if (response.ok) {
-        const onlineUsers = await response.json();
-        setOnlineUsers(onlineUsers);
+        const onlineUsersData = await response.json();
+        setOnlineUsers(onlineUsersData);
       }
     } catch (error) {
       console.error('Error fetching online users:', error);
@@ -153,12 +207,11 @@ const Dashboard: React.FC<DashboardProps> = ({ toggleDarkMode, darkMode }) => {
     fetchDashboardData();
     fetchOnlineUsers();
     
-    // Set up interval to refresh online users
-    const interval = setInterval(fetchOnlineUsers, 30000); // Every 30 seconds
+    const interval = setInterval(fetchOnlineUsers, 30000);
     return () => clearInterval(interval);
   }, []);
 
-  const StatCard = ({ title, value, icon, color }: any) => (
+  const StatCard = ({ title, value, icon, color, subtitle }: any) => (
     <Card sx={{ 
       background: `linear-gradient(135deg, ${color} 0%, ${color}dd 100%)`,
       color: 'white',
@@ -179,6 +232,11 @@ const Dashboard: React.FC<DashboardProps> = ({ toggleDarkMode, darkMode }) => {
             <Typography variant="h6" sx={{ opacity: 0.9, fontSize: '1rem' }}>
               {title}
             </Typography>
+            {subtitle && (
+              <Typography variant="body2" sx={{ opacity: 0.8, mt: 0.5 }}>
+                {subtitle}
+              </Typography>
+            )}
           </Box>
           <Box sx={{ 
             p: 1.5, 
@@ -195,82 +253,154 @@ const Dashboard: React.FC<DashboardProps> = ({ toggleDarkMode, darkMode }) => {
     </Card>
   );
 
-  // Team Collaboration Widget - Shows real team members
-  const TeamCollaborationWidget = () => (
-    <Paper sx={{ 
-      p: 3, 
-      borderRadius: 3,
-      backgroundColor: 'background.paper'
-    }}>
-      <Typography variant="h6" fontWeight="600" gutterBottom>
-        Team Collaboration
-      </Typography>
-      
-      {/* Online Status */}
-      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
-        <Box sx={{ display: 'flex', alignItems: 'center' }}>
-          <Box sx={{ width: 8, height: 8, borderRadius: '50%', bgcolor: 'success.main', mr: 1 }} />
-          <Typography variant="body2">
-            {onlineUsers.length} of {teamMembers.length} online
-          </Typography>
-        </Box>
-      </Box>
-
-      {/* Team Members List */}
-      <Box sx={{ mb: 2 }}>
-        <Typography variant="subtitle2" color="text.secondary" gutterBottom>
-          Your Team
-        </Typography>
-        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-          {teamMembers.slice(0, 3).map((member) => (
-            <Box key={member._id} sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-              <Avatar 
-                sx={{ 
-                  width: 32, 
-                  height: 32, 
-                  fontSize: '0.8rem',
-                  bgcolor: member._id === user?.id ? 'primary.main' : 'secondary.main'
-                }}
-              >
-                {member.name.charAt(0).toUpperCase()}
-              </Avatar>
-              <Box sx={{ flexGrow: 1 }}>
-                <Typography variant="body2" fontWeight="500">
-                  {member.name} {member._id === user?.id && '(You)'}
-                </Typography>
-                <Typography variant="caption" color="text.secondary">
-                  {member.email}
-                </Typography>
+  const renderMainContent = () => {
+    switch (activeSection) {
+      case 'dashboard':
+        return (
+          <>
+            {/* Analytics Cards */}
+            <Box sx={{ 
+              display: 'flex', 
+              flexDirection: { xs: 'column', sm: 'row' },
+              gap: 3, 
+              mb: 4,
+              flexWrap: 'wrap'
+            }}>
+              <Box sx={{ flex: '1 1 200px', minWidth: '200px' }}>
+                <StatCard
+                  title="Total Projects"
+                  value={stats.totalProjects}
+                  icon={<Folder sx={{ color: 'white', fontSize: 28 }} />}
+                  color="#667eea"
+                  subtitle={`${stats.activeProjects} active`}
+                />
               </Box>
-              <Chip 
-                label={onlineUsers.some(u => u._id === member._id) ? "Online" : "Offline"} 
-                size="small" 
-                color={onlineUsers.some(u => u._id === member._id) ? "success" : "default"} 
-                variant="outlined"
-              />
+              <Box sx={{ flex: '1 1 200px', minWidth: '200px' }}>
+                <StatCard
+                  title="Team Members"
+                  value={stats.totalTeamMembers}
+                  icon={<People sx={{ color: 'white', fontSize: 28 }} />}
+                  color="#f093fb"
+                  subtitle={`${teamMembers.filter(m => m.isOnline).length} online`}
+                />
+              </Box>
+              <Box sx={{ flex: '1 1 200px', minWidth: '200px' }}>
+                <StatCard
+                  title="Tasks Completed"
+                  value={stats.completedTasks}
+                  icon={<CheckCircle sx={{ color: 'white', fontSize: 28 }} />}
+                  color="#4facfe"
+                  subtitle="Across all projects"
+                />
+              </Box>
+              <Box sx={{ flex: '1 1 200px', minWidth: '200px' }}>
+                <StatCard
+                  title="Overall Progress"
+                  value={`${stats.completionRate}%`}
+                  icon={<Assignment sx={{ color: 'white', fontSize: 28 }} />}
+                  color="#43e97b"
+                  subtitle="Completion rate"
+                />
+              </Box>
             </Box>
-          ))}
-          
-          {teamMembers.length > 3 && (
-            <Typography variant="caption" color="text.secondary" sx={{ textAlign: 'center', mt: 1 }}>
-              +{teamMembers.length - 3} more team members
-            </Typography>
-          )}
-        </Box>
-      </Box>
 
-      {/* Quick Team Actions */}
-      <Button 
-        variant="outlined" 
-        size="small" 
-        fullWidth 
-        startIcon={<Groups />}
-        onClick={() => {/* Navigate to team management */}}
-      >
-        Manage Team
-      </Button>
-    </Paper>
-  );
+            {/* Projects Section */}
+            <Paper sx={{ 
+              p: 3, 
+              borderRadius: 3,
+              backgroundColor: 'background.paper'
+            }}>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+                <Typography variant="h5" fontWeight="600">
+                  Your Projects
+                </Typography>
+                <Button 
+                  variant="contained" 
+                  startIcon={<Add />}
+                >
+                  New Project
+                </Button>
+              </Box>
+              <ProjectList onProjectCreated={fetchDashboardData} />
+            </Paper>
+          </>
+        );
+
+      case 'projects':
+        return (
+          <Paper sx={{ 
+            p: 3, 
+            borderRadius: 3,
+            backgroundColor: 'background.paper',
+            minHeight: '600px'
+          }}>
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+              <Typography variant="h4" fontWeight="600">
+                All Projects
+              </Typography>
+              <Button 
+                variant="contained" 
+                startIcon={<Add />}
+              >
+                New Project
+              </Button>
+            </Box>
+            <ProjectList onProjectCreated={fetchDashboardData} />
+          </Paper>
+        );
+
+      case 'team':
+        return <TeamManagementSidebar />;
+
+      case 'analytics':
+        return <AnalyticsDashboard />;
+
+      case 'settings':
+        return <UserSettings />;
+
+      case 'calendar':
+        return (
+          <Paper sx={{ 
+            p: 3, 
+            borderRadius: 3,
+            backgroundColor: 'background.paper',
+            textAlign: 'center',
+            minHeight: '400px',
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'center',
+            alignItems: 'center'
+          }}>
+            <CalendarMonth sx={{ fontSize: 64, color: 'primary.main', mb: 2 }} />
+            <Typography variant="h4" gutterBottom>
+              Calendar View
+            </Typography>
+            <Typography variant="body1" color="text.secondary" sx={{ mb: 3 }}>
+              Project deadlines, milestones, and team availability will appear here.
+            </Typography>
+            <Button variant="outlined">
+              Coming Soon
+            </Button>
+          </Paper>
+        );
+
+      default:
+        return (
+          <Paper sx={{ 
+            p: 3, 
+            borderRadius: 3,
+            backgroundColor: 'background.paper'
+          }}>
+            <Typography variant="h5">Welcome to TeamFlow</Typography>
+          </Paper>
+        );
+    }
+  };
+
+  const getSectionTitle = () => {
+    const section = menuItems.find(item => item.id === activeSection);
+    return section ? section.text : 'Dashboard';
+  };
 
   if (loading) {
     return (
@@ -309,24 +439,18 @@ const Dashboard: React.FC<DashboardProps> = ({ toggleDarkMode, darkMode }) => {
         </Box>
 
         <List sx={{ px: 2, mt: 2 }}>
-          {[
-            { text: 'Dashboard', icon: <DashboardIcon />, active: true },
-            { text: 'Projects', icon: <Folder /> },
-            { text: 'Team', icon: <Groups /> },
-            { text: 'Calendar', icon: <CalendarMonth /> },
-            { text: 'Analytics', icon: <BarChart /> },
-            { text: 'Settings', icon: <Settings /> },
-          ].map((item) => (
+          {menuItems.map((item) => (
             <ListItem 
-              key={item.text}
+              key={item.id}
               disablePadding
               sx={{
                 borderRadius: 2,
                 mb: 1,
-                backgroundColor: item.active ? 'rgba(255, 255, 255, 0.15)' : 'transparent',
+                backgroundColor: activeSection === item.id ? 'rgba(255, 255, 255, 0.15)' : 'transparent',
               }}
             >
               <ListItemButton
+                onClick={() => setActiveSection(item.id)}
                 sx={{
                   borderRadius: 2,
                   '&:hover': {
@@ -340,7 +464,7 @@ const Dashboard: React.FC<DashboardProps> = ({ toggleDarkMode, darkMode }) => {
                 <ListItemText 
                   primary={item.text} 
                   primaryTypographyProps={{
-                    fontWeight: item.active ? 600 : 400
+                    fontWeight: activeSection === item.id ? 600 : 400
                   }}
                 />
               </ListItemButton>
@@ -363,7 +487,7 @@ const Dashboard: React.FC<DashboardProps> = ({ toggleDarkMode, darkMode }) => {
                   <Avatar 
                     key={member._id}
                     sx={{ 
-                      bgcolor: onlineUsers.some(u => u._id === member._id) ? 'success.main' : 'grey.500'
+                      bgcolor: onlineUsers.some(u => u.userId === member._id) ? 'success.main' : 'grey.500'
                     }}
                   >
                     {member.name.charAt(0).toUpperCase()}
@@ -429,7 +553,7 @@ const Dashboard: React.FC<DashboardProps> = ({ toggleDarkMode, darkMode }) => {
         >
           <Toolbar>
             <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
-              Dashboard
+              {getSectionTitle()}
             </Typography>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
               <IconButton onClick={toggleDarkMode} color="inherit">
@@ -442,126 +566,8 @@ const Dashboard: React.FC<DashboardProps> = ({ toggleDarkMode, darkMode }) => {
           </Toolbar>
         </AppBar>
         
-        <Container maxWidth="xl" sx={{ mt: 4 }}>
-          {/* Analytics Cards */}
-          <Box sx={{ 
-            display: 'flex', 
-            flexDirection: { xs: 'column', sm: 'row' },
-            gap: 3, 
-            mb: 4,
-            flexWrap: 'wrap'
-          }}>
-            <Box sx={{ flex: '1 1 200px', minWidth: '200px' }}>
-              <StatCard
-                title="Total Projects"
-                value={stats.totalProjects}
-                icon={<Folder sx={{ color: 'white', fontSize: 28 }} />}
-                color="#667eea"
-              />
-            </Box>
-            <Box sx={{ flex: '1 1 200px', minWidth: '200px' }}>
-              <StatCard
-                title="Team Members"
-                value={stats.totalTeamMembers}
-                icon={<People sx={{ color: 'white', fontSize: 28 }} />}
-                color="#f093fb"
-              />
-            </Box>
-            <Box sx={{ flex: '1 1 200px', minWidth: '200px' }}>
-              <StatCard
-                title="Active Projects"
-                value={stats.activeProjects}
-                icon={<CheckCircle sx={{ color: 'white', fontSize: 28 }} />}
-                color="#4facfe"
-              />
-            </Box>
-            <Box sx={{ flex: '1 1 200px', minWidth: '200px' }}>
-              <StatCard
-                title="Tasks Completed"
-                value={stats.completedTasks}
-                icon={<Assignment sx={{ color: 'white', fontSize: 28 }} />}
-                color="#43e97b"
-              />
-            </Box>
-          </Box>
-
-          {/* Main Content Area */}
-          <Box sx={{ 
-            display: 'flex', 
-            flexDirection: { xs: 'column', md: 'row' }, 
-            gap: 3 
-          }}>
-            {/* Projects Section - Takes 2/3 width on desktop */}
-            <Box sx={{ 
-              flex: { md: 2 }, 
-              minWidth: 0
-            }}>
-              <Paper sx={{ 
-                p: 3, 
-                borderRadius: 3,
-                backgroundColor: 'background.paper'
-              }}>
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-                  <Typography variant="h5" fontWeight="600">
-                    Your Projects
-                  </Typography>
-                  <Button 
-                    variant="contained" 
-                    startIcon={<Add />}
-                  >
-                    New Project
-                  </Button>
-                </Box>
-                <ProjectList onProjectCreated={fetchDashboardData} />
-              </Paper>
-            </Box>
-
-            {/* Sidebar - Takes 1/3 width on desktop */}
-            <Box sx={{ 
-              flex: { md: 1 },
-              display: 'flex',
-              flexDirection: 'column',
-              gap: 3
-            }}>
-              {/* Team Collaboration Widget */}
-              <TeamCollaborationWidget />
-              
-              {/* Quick Stats */}
-              <Paper sx={{ 
-                p: 3, 
-                borderRadius: 3,
-                backgroundColor: 'background.paper'
-              }}>
-                <Typography variant="h6" fontWeight="600" gutterBottom>
-                  Quick Stats
-                </Typography>
-                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <Typography variant="body2" color="text.secondary">
-                      Projects Created
-                    </Typography>
-                    <Chip label={stats.totalProjects} color="primary" size="small" />
-                  </Box>
-                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <Typography variant="body2" color="text.secondary">
-                      Team Members
-                    </Typography>
-                    <Chip label={stats.totalTeamMembers} color="secondary" size="small" />
-                  </Box>
-                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <Typography variant="body2" color="text.secondary">
-                      Collaboration
-                    </Typography>
-                    <Chip 
-                      label={stats.totalTeamMembers > 1 ? "Team" : "Solo"} 
-                      color={stats.totalTeamMembers > 1 ? "success" : "warning"} 
-                      size="small" 
-                    />
-                  </Box>
-                </Box>
-              </Paper>
-            </Box>
-          </Box>
+        <Container maxWidth="xl" sx={{ mt: 4, pb: 4 }}>
+          {renderMainContent()}
         </Container>
       </Box>
     </Box>

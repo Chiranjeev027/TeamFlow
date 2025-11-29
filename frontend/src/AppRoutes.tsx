@@ -5,6 +5,8 @@ import { useAuth } from './context/AuthContext';
 import AuthPage from './pages/AuthPage';
 import Dashboard from './pages/Dashboard';
 import ProjectPage from './pages/ProjectPage';
+import TeamsPage from './pages/TeamsPage';
+
 
 interface AppRoutesProps {
   toggleDarkMode: () => void;
@@ -33,6 +35,10 @@ const AppRoutes: React.FC<AppRoutesProps> = ({ toggleDarkMode, darkMode }) => {
         element={user ? <ProjectPage toggleDarkMode={toggleDarkMode} darkMode={darkMode} /> : <Navigate to="/auth" />} 
       />
       <Route path="*" element={<Navigate to="/" />} />
+      <Route 
+        path="/teams" 
+        element={user ? <TeamsPage /> : <Navigate to="/auth" />} 
+      />
     </Routes>
   );
 };
