@@ -8,10 +8,12 @@ import {
   FiEye,
   FiMoreVertical,
   FiEdit2,
-  FiTrash2
+  FiTrash2,
+  FiMinusCircle
 } from 'react-icons/fi';
 import InviteMemberDialog from './InviteMemberDialog';
 import TeamPerformance from './TeamPerformance';
+import { useSocket } from '../context/SocketContext';
 
 interface TeamMember {
   _id: string;
@@ -19,6 +21,7 @@ interface TeamMember {
   email: string;
   role: 'admin' | 'member' | 'viewer';
   isOnline: boolean;
+  status?: 'online' | 'busy' | 'offline';
   lastSeen: string;
   projects: number;
   tasksCompleted: number;
@@ -45,6 +48,7 @@ const TeamManagementSidebar: React.FC = () => {
   const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null);
   const [selectedMember, setSelectedMember] = useState<TeamMember | null>(null);
   const [menuPosition, setMenuPosition] = useState({ top: 0, left: 0 });
+  const { onlineUsers } = useSocket();
 
   // Fetch real team data
   const fetchTeamData = async () => {
@@ -99,23 +103,7 @@ const TeamManagementSidebar: React.FC = () => {
       });
 
       const uniqueTeamMembers = Array.from(allTeamMembers.values());
-
-      // Fetch online users to update online status
-      const onlineResponse = await fetch('/api/users/online', {
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-
-      if (onlineResponse.ok) {
-        const onlineUsers = await onlineResponse.json();
-        // Update team members with online status
-        const updatedTeamMembers = uniqueTeamMembers.map(member => ({
-          ...member,
-          isOnline: onlineUsers.some((online: any) => online.userId === member._id)
-        }));
-        setTeamMembers(updatedTeamMembers);
-      } else {
-        setTeamMembers(uniqueTeamMembers);
-      }
+      setTeamMembers(uniqueTeamMembers);
 
     } catch (error: any) {
       console.error('Error fetching team data:', error);
@@ -128,6 +116,18 @@ const TeamManagementSidebar: React.FC = () => {
   useEffect(() => {
     fetchTeamData();
   }, []);
+
+  // Merge real-time status
+  const membersWithStatus = React.useMemo(() => {
+    return teamMembers.map(member => {
+      const onlineUser = onlineUsers.find(u => u.userId === member._id);
+      return {
+        ...member,
+        isOnline: !!onlineUser,
+        status: onlineUser?.status || 'offline'
+      };
+    });
+  }, [teamMembers, onlineUsers]);
 
   const handleMenuOpen = (event: React.MouseEvent<HTMLElement>, member: TeamMember) => {
     const rect = event.currentTarget.getBoundingClientRect();
@@ -144,9 +144,11 @@ const TeamManagementSidebar: React.FC = () => {
     setSelectedMember(null);
   };
 
-  const onlineCount = teamMembers.filter(member => member.isOnline).length;
-  const adminCount = teamMembers.filter(member => member.role === 'admin').length;
-  const totalProjects = teamMembers.reduce((acc, member) => acc + (member.projects || 0), 0);
+  const onlineCount = membersWithStatus.filter(member => member.status === 'online').length;
+  const busyCount = membersWithStatus.filter(member => member.status === 'busy').length;
+  const offlineCount = membersWithStatus.filter(member => member.status === 'offline').length;
+  const adminCount = membersWithStatus.filter(member => member.role === 'admin').length;
+  const totalProjects = membersWithStatus.reduce((acc, member) => acc + (member.projects || 0), 0);
 
   const getRoleIcon = (role: string) => {
     switch (role) {
@@ -163,6 +165,32 @@ const TeamManagementSidebar: React.FC = () => {
       case 'member': return 'bg-secondary-100 text-secondary-700 dark:bg-secondary-900/20 dark:text-secondary-300';
       case 'viewer': return 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300';
       default: return 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300';
+    }
+  };
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'online': return 'bg-green-500';
+      case 'busy': return 'bg-yellow-500';
+      case 'offline': return 'bg-gray-400';
+      default: return 'bg-gray-400';
+    }
+  };
+
+  const getStatusIcon = (status: string) => {
+    switch (status) {
+      case 'online': return <FiWifi className="w-3 h-3 text-green-500" />;
+      case 'busy': return <FiMinusCircle className="w-3 h-3 text-yellow-500" />;
+      default: return <FiWifi className="w-3 h-3 text-gray-400" />;
+    }
+  };
+
+  const getStatusText = (status: string) => {
+    switch (status) {
+      case 'online': return 'Online';
+      case 'busy': return 'Busy';
+      case 'offline': return 'Offline';
+      default: return 'Offline';
     }
   };
 
@@ -208,7 +236,7 @@ const TeamManagementSidebar: React.FC = () => {
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
         <div className="card">
           <p className="text-gray-600 dark:text-gray-400 text-sm mb-1">Total Team Members</p>
-          <p className="text-3xl font-bold mb-2">{teamMembers.length}</p>
+          <p className="text-3xl font-bold mb-2">{membersWithStatus.length}</p>
           <div className="flex items-center gap-1">
             <FiWifi className="w-4 h-4 text-green-500" />
             <span className="text-sm text-green-600 dark:text-green-400">{onlineCount} online</span>
@@ -233,19 +261,20 @@ const TeamManagementSidebar: React.FC = () => {
         <h3 className="text-lg font-semibold mb-3">Team Overview</h3>
         <div className="flex items-center gap-4 mb-3">
           <div className="flex -space-x-2">
-            {teamMembers.slice(0, 6).map((member) => (
+            {membersWithStatus.slice(0, 6).map((member) => (
               <div
                 key={member._id}
-                title={member.name}
-                className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-semibold text-white border-2 border-white dark:border-gray-800 ${member.isOnline ? 'bg-green-500 ring-2 ring-green-300' : 'bg-gray-400'
+                title={`${member.name} (${getStatusText(member.status || 'offline')})`}
+                className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-semibold text-white border-2 border-white dark:border-gray-800 relative ${member.status === 'offline' ? 'bg-gray-400' : 'bg-indigo-500'
                   }`}
               >
                 {member.name.charAt(0)}
+                <div className={`absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 border-white dark:border-gray-800 ${getStatusColor(member.status || 'offline')}`}></div>
               </div>
             ))}
-            {teamMembers.length > 6 && (
+            {membersWithStatus.length > 6 && (
               <div className="w-10 h-10 rounded-full flex items-center justify-center text-sm font-semibold bg-gray-300 dark:bg-gray-600 border-2 border-white dark:border-gray-800">
-                +{teamMembers.length - 6}
+                +{membersWithStatus.length - 6}
               </div>
             )}
           </div>
@@ -256,8 +285,12 @@ const TeamManagementSidebar: React.FC = () => {
                 <FiWifi className="w-3 h-3" />
                 {onlineCount} Online
               </span>
+              <span className="px-2 py-1 bg-yellow-100 dark:bg-yellow-900/20 text-yellow-700 dark:text-yellow-300 text-xs rounded-full flex items-center gap-1">
+                <FiMinusCircle className="w-3 h-3" />
+                {busyCount} Busy
+              </span>
               <span className="px-2 py-1 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 text-xs rounded-full">
-                {teamMembers.length - onlineCount} Offline
+                {offlineCount} Offline
               </span>
             </div>
           </div>
@@ -270,8 +303,8 @@ const TeamManagementSidebar: React.FC = () => {
           <button
             onClick={() => setTabValue(0)}
             className={`px-4 py-2 font-medium transition-colors ${tabValue === 0
-                ? 'text-primary-500 border-b-2 border-primary-500'
-                : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
+              ? 'text-primary-500 border-b-2 border-primary-500'
+              : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
               }`}
           >
             Team Members
@@ -279,8 +312,8 @@ const TeamManagementSidebar: React.FC = () => {
           <button
             onClick={() => setTabValue(1)}
             className={`px-4 py-2 font-medium transition-colors ${tabValue === 1
-                ? 'text-primary-500 border-b-2 border-primary-500'
-                : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
+              ? 'text-primary-500 border-b-2 border-primary-500'
+              : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
               }`}
           >
             Performance Analytics
@@ -288,8 +321,8 @@ const TeamManagementSidebar: React.FC = () => {
           <button
             onClick={() => setTabValue(2)}
             className={`px-4 py-2 font-medium transition-colors ${tabValue === 2
-                ? 'text-primary-500 border-b-2 border-primary-500'
-                : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
+              ? 'text-primary-500 border-b-2 border-primary-500'
+              : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
               }`}
           >
             Team Settings
@@ -299,18 +332,21 @@ const TeamManagementSidebar: React.FC = () => {
         <div>
           {tabValue === 0 && (
             <div className="space-y-2">
-              {teamMembers.map((member) => (
+              {membersWithStatus.map((member) => (
                 <div
                   key={member._id}
                   className="border border-gray-200 dark:border-gray-700 rounded-lg p-3 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
                 >
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                      <div
-                        className={`w-10 h-10 rounded-full flex items-center justify-center text-white font-semibold ${member.isOnline ? 'bg-green-500 ring-2 ring-green-300' : 'bg-gray-400'
-                          }`}
-                      >
-                        {member.name.charAt(0)}
+                      <div className="relative">
+                        <div
+                          className={`w-10 h-10 rounded-full flex items-center justify-center text-white font-semibold ${member.status === 'offline' ? 'bg-gray-400' : 'bg-indigo-500'
+                            }`}
+                        >
+                          {member.name.charAt(0)}
+                        </div>
+                        <div className={`absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 border-white dark:border-gray-800 ${getStatusColor(member.status || 'offline')}`}></div>
                       </div>
                       <div>
                         <div className="flex items-center gap-2 mb-1">
@@ -320,13 +356,9 @@ const TeamManagementSidebar: React.FC = () => {
                             {member.role.toUpperCase()}
                           </span>
                           <div className="flex items-center gap-1">
-                            {member.isOnline ? (
-                              <FiWifi className="w-3 h-3 text-green-500" />
-                            ) : (
-                              <FiWifi className="w-3 h-3 text-gray-400" />
-                            )}
+                            {getStatusIcon(member.status || 'offline')}
                             <span className="text-xs text-gray-600 dark:text-gray-400">
-                              {member.isOnline ? 'Online' : 'Offline'}
+                              {getStatusText(member.status || 'offline')}
                             </span>
                           </div>
                         </div>
@@ -382,7 +414,7 @@ const TeamManagementSidebar: React.FC = () => {
             </div>
           )}
           {tabValue === 1 && (
-            <TeamPerformance members={teamMembers} />
+            <TeamPerformance members={membersWithStatus} />
           )}
           {tabValue === 2 && (
             <div>

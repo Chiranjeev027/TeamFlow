@@ -9,7 +9,7 @@ interface Activity {
 }
 
 const ActivityFeed: React.FC<{ projectId: string }> = ({ projectId }) => {
-  const socket = useSocket();
+  const { socket } = useSocket();
   const [activities, setActivities] = useState<Activity[]>([]);
 
   useEffect(() => {

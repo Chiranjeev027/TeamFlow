@@ -16,6 +16,7 @@ import projectRoutes from './routes/projects';
 import taskRoutes from './routes/tasks';
 import usersRoutes from './routes/users';
 import teamEventRoutes from './routes/teamEventRoutes';
+import { setupGlobalHandlers } from './socket/handlers';
 
 dotenv.config();
 
@@ -86,6 +87,9 @@ const projectUsers = new Map<string, Map<string, OnlineUser>>();
 
 io.on('connection', (socket) => {
   console.log('🔌 User connected:', socket.id);
+
+  // Setup global event handlers (online status, task presence, etc.)
+  setupGlobalHandlers(io, socket);
 
   // User joins a project - FIXED VERSION
   socket.on('user-joined', ({ projectId, user }: { projectId: string; user: OnlineUser }) => {

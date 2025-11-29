@@ -31,27 +31,21 @@ const RecentActivityFeed: React.FC = () => {
         try {
             const token = localStorage.getItem('token');
 
-            // Fetch recent tasks and projects to generate activity feed
-            const [tasksRes, projectsRes] = await Promise.all([
-                fetch('/api/tasks', {
-                    headers: { 'Authorization': `Bearer ${token}` }
-                }),
-                fetch('/api/projects', {
-                    headers: { 'Authorization': `Bearer ${token}` }
-                })
-            ]);
+            // Only fetch projects since tasks endpoint doesn't exist globally
+            const projectsRes = await fetch('/api/projects', {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
 
-            if (tasksRes.ok && projectsRes.ok) {
-                const tasks = await tasksRes.json();
+            if (projectsRes.ok) {
                 const projects = await projectsRes.json();
 
-                // Generate activities from recent data
+                // Generate activities from recent projects
                 const generatedActivities: Activity[] = [];
 
-                // Recent projects (last 5)
+                // Recent projects (last 10)
                 projects
                     .sort((a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
-                    .slice(0, 3)
+                    .slice(0, 10)
                     .forEach((project: any) => {
                         generatedActivities.push({
                             id: `project-${project._id}`,
@@ -63,27 +57,9 @@ const RecentActivityFeed: React.FC = () => {
                         });
                     });
 
-                // Recent tasks (last 7)
-                tasks
-                    .sort((a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
-                    .slice(0, 7)
-                    .forEach((task: any) => {
-                        const activityType = task.status === 'done' ? 'task_completed' : 'task_created';
-                        generatedActivities.push({
-                            id: `task-${task._id}`,
-                            type: activityType,
-                            user: task.assignee?.name || task.createdBy?.name || 'Unknown',
-                            description: activityType === 'task_completed'
-                                ? `completed task "${task.title}"`
-                                : `created task "${task.title}"`,
-                            timestamp: new Date(task.createdAt),
-                            projectName: task.project?.name
-                        });
-                    });
-
-                // Sort by timestamp and take top 10
+                // Sort by timestamp
                 generatedActivities.sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime());
-                setActivities(generatedActivities.slice(0, 10));
+                setActivities(generatedActivities);
             }
         } catch (error) {
             console.error('Error fetching activities:', error);

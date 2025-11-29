@@ -12,24 +12,24 @@ interface OnlineUser {
 }
 
 const UserPresence: React.FC<{ projectId: string }> = ({ projectId }) => {
-  const socket = useSocket();
+  const { socket } = useSocket();
   const { user } = useAuth();
   const [onlineUsers, setOnlineUsers] = useState<OnlineUser[]>([]);
 
   useEffect(() => {
     if (socket && user && projectId) {
       console.log('🔌 Joining project room:', projectId, 'User:', user.name);
-      
+
       // Join project room and notify others
-      socket.emit('user-joined', { 
-        projectId, 
-        user: { 
-          userId: user.id, 
-          name: user.name, 
-          email: user.email 
-        } 
+      socket.emit('user-joined', {
+        projectId,
+        user: {
+          userId: user.id,
+          name: user.name,
+          email: user.email
+        }
       });
-      
+
       // Listen for user presence updates
       socket.on('online-users', (users: OnlineUser[]) => {
         console.log('👥 Online users received:', users);
@@ -85,11 +85,10 @@ const UserPresence: React.FC<{ projectId: string }> = ({ projectId }) => {
           <div
             key={onlineUser.userId}
             title={onlineUser.name}
-            className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-semibold text-white border-2 border-white dark:border-gray-800 ${
-              onlineUser.userId === user?.id 
-                ? 'bg-primary-500 ring-2 ring-primary-300' 
+            className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-semibold text-white border-2 border-white dark:border-gray-800 ${onlineUser.userId === user?.id
+                ? 'bg-primary-500 ring-2 ring-primary-300'
                 : 'bg-secondary-500'
-            }`}
+              }`}
           >
             {onlineUser.name.charAt(0).toUpperCase()}
           </div>

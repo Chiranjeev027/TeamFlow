@@ -49,9 +49,14 @@ const UpcomingDeadlines: React.FC = () => {
                     .slice(0, 8); // Limit to 8 items
 
                 setDeadlines(upcomingTasks);
+            } else {
+                // 404 or other error - just show empty state
+                setDeadlines([]);
             }
         } catch (error) {
             console.error('Error fetching deadlines:', error);
+            // Show empty state on error
+            setDeadlines([]);
         } finally {
             setLoading(false);
         }

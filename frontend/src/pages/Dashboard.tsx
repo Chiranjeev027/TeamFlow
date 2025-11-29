@@ -6,11 +6,13 @@ import {
   FiCalendar,
   FiCheckCircle
 } from 'react-icons/fi';
+import { useLocation } from 'react-router-dom';
 import ProjectList from '../components/ProjectList';
 import TeamManagementSidebar from '../components/TeamManagementSidebar';
 import AnalyticsDashboard from '../components/AnalyticsDashboard';
 import UserSettings from '../components/UserSettings';
 import Sidebar from '../components/Sidebar';
+import { useSocket } from '../context/SocketContext';
 import TopBar from '../components/TopBar';
 import RecentActivityFeed from '../components/RecentActivityFeed';
 import UpcomingDeadlines from '../components/UpcomingDeadlines';
@@ -41,8 +43,17 @@ interface TeamMember {
 }
 
 const Dashboard: React.FC<DashboardProps> = ({ toggleDarkMode, darkMode }) => {
-  // const { user } = useAuth();
-  const [activeSection, setActiveSection] = useState('dashboard');
+  const location = useLocation();
+  // Initialize activeSection from location state if available, otherwise default to 'dashboard'
+  const [activeSection, setActiveSection] = useState(location.state?.section || 'dashboard');
+
+  // Update activeSection when location state changes
+  useEffect(() => {
+    if (location.state?.section) {
+      setActiveSection(location.state.section);
+    }
+  }, [location.state]);
+
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState<DashboardStats>({
     totalProjects: 0,
@@ -52,8 +63,7 @@ const Dashboard: React.FC<DashboardProps> = ({ toggleDarkMode, darkMode }) => {
     completionRate: 0
   });
   const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
-  interface OnlineUser { userId: string; name: string; email?: string; projectId?: string }
-  const [onlineUsers, setOnlineUsers] = useState<OnlineUser[]>([]);
+  const { onlineUsers } = useSocket();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   const fetchDashboardData = async () => {
@@ -150,28 +160,8 @@ const Dashboard: React.FC<DashboardProps> = ({ toggleDarkMode, darkMode }) => {
     }
   };
 
-  const fetchOnlineUsers = async () => {
-    try {
-      const token = localStorage.getItem('token');
-      const response = await fetch('/api/users/online', {
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-
-      if (response.ok) {
-        const onlineUsersData = await response.json();
-        setOnlineUsers(onlineUsersData);
-      }
-    } catch (error) {
-      console.error('Error fetching online users:', error);
-    }
-  };
-
   useEffect(() => {
     fetchDashboardData();
-    fetchOnlineUsers();
-
-    const interval = setInterval(fetchOnlineUsers, 30000);
-    return () => clearInterval(interval);
   }, []);
 
   const StatCard = ({ title, value, icon, color, subtitle }: any) => (

@@ -29,13 +29,13 @@ function App() {
 
   return (
     <div className={`min-h-screen bg-slate-50 dark:bg-slate-900 text-gray-900 dark:text-gray-100 ${darkMode ? 'dark' : ''}`}>
-      <SocketProvider>
-        <AuthProvider>
+      <AuthProvider>
+        <SocketProvider>
           <Router>
             <AppRoutes toggleDarkMode={toggleDarkMode} darkMode={darkMode} />
           </Router>
-        </AuthProvider>
-      </SocketProvider>
+        </SocketProvider>
+      </AuthProvider>
     </div>
   );
 }

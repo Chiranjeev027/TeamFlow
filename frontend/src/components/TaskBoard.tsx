@@ -13,11 +13,11 @@ import UserPresence from './UserPresence';
 import TeamManagement from './TeamManagement';
 import TaskColumn from './TaskColumn';
 import TaskForm from './TaskForm';
-import type { Task, Project, TaskFormData } from '../types'; 
+import type { Task, Project, TaskFormData } from '../types';
 
 const TaskBoard: React.FC = () => {
   const { projectId } = useParams<{ projectId: string }>();
-  const socket = useSocket();
+  const { socket, updateStatus } = useSocket();
   const { user } = useAuth();
 
   const [project, setProject] = useState<Project | null>(null);
@@ -50,6 +50,11 @@ const TaskBoard: React.FC = () => {
     { id: 'done', title: 'Done', color: '#10b981' }
   ];
 
+  // Auto-set status to online when entering task board
+  useEffect(() => {
+    updateStatus('online');
+  }, []);
+
   // Data fetching
   const fetchProjectData = async () => {
     try {
@@ -57,9 +62,9 @@ const TaskBoard: React.FC = () => {
       const response = await fetch(`/api/projects/${projectId}`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
-      
+
       if (!response.ok) throw new Error('Failed to fetch project');
-      
+
       const data = await response.json();
       setProject(data.project);
       setTasks(data.tasks || []);
@@ -74,16 +79,16 @@ const TaskBoard: React.FC = () => {
   useEffect(() => {
     if (projectId) {
       fetchProjectData();
-      
+
       if (socket) {
         socket.emit('join-project', projectId);
-        
+
         const socketHandlers = {
           'task-created': (newTask: Task) => setTasks(prev => [...prev, newTask]),
-          'task-updated': (updatedTask: Task) => setTasks(prev => 
+          'task-updated': (updatedTask: Task) => setTasks(prev =>
             prev.map(task => task._id === updatedTask._id ? updatedTask : task)
           ),
-          'task-deleted': (deletedTaskId: string) => setTasks(prev => 
+          'task-deleted': (deletedTaskId: string) => setTasks(prev =>
             prev.filter(task => task._id !== deletedTaskId)
           ),
           'member-added': fetchProjectData,
@@ -141,7 +146,7 @@ const TaskBoard: React.FC = () => {
       });
 
       if (!response.ok) throw new Error('Failed to create task');
-      
+
       resetForm();
       setCreateDialogOpen(false);
       setError('');
@@ -153,7 +158,7 @@ const TaskBoard: React.FC = () => {
   const updateTask = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!editingTask) return;
-    
+
     try {
       const token = localStorage.getItem('token');
       const response = await fetch(`/api/tasks/${editingTask._id}`, {
@@ -164,9 +169,9 @@ const TaskBoard: React.FC = () => {
         },
         body: JSON.stringify(editingTask)
       });
-      
+
       if (!response.ok) throw new Error('Failed to update task');
-      
+
       setEditingTask(null);
       setEditDialogOpen(false);
     } catch (error: any) {
@@ -197,7 +202,7 @@ const TaskBoard: React.FC = () => {
         method: 'DELETE',
         headers: { 'Authorization': `Bearer ${token}` }
       });
-      
+
       if (!response.ok) throw new Error('Failed to delete task');
     } catch (error: any) {
       setError(error.message);
@@ -226,8 +231,8 @@ const TaskBoard: React.FC = () => {
     return 1 + uniqueMembers.length;
   };
 
-  const isOwner = user && project && user.id && project.owner && 
-                  user.id.toString() === project.owner._id.toString();
+  const isOwner = user && project && user.id && project.owner &&
+    user.id.toString() === project.owner._id.toString();
 
   const resetForm = () => {
     setFormData({
@@ -277,175 +282,170 @@ const TaskBoard: React.FC = () => {
 
   return (
     <>
-    <div className="w-full">
-      {/* Header */}
-      <div className="flex justify-between items-center mb-6">
-        <div>
-          <h1 className="text-3xl font-bold">{project.name}</h1>
-          <p className="text-gray-600 dark:text-gray-400">{project.description}</p>
-        </div>
-        <div className="flex gap-3 items-center">
-          <button
-            onClick={() => setTeamDialogOpen(true)}
-            className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-colors relative ${
-              isOwner 
-                ? 'btn-primary' 
+      <div className="w-full">
+        {/* Header */}
+        <div className="flex justify-between items-center mb-6">
+          <div>
+            <h1 className="text-3xl font-bold">{project.name}</h1>
+            <p className="text-gray-600 dark:text-gray-400">{project.description}</p>
+          </div>
+          <div className="flex gap-3 items-center">
+            <button
+              onClick={() => setTeamDialogOpen(true)}
+              className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-colors relative ${isOwner
+                ? 'btn-primary'
                 : 'btn-outline'
-            }`}
-          >
-            <FiUsers />
-            {isOwner ? "Invite Team" : "View Team"} ({getTeamCount()})
-            {isOwner && getTeamCount() === 1 && (
-              <span className="absolute -top-2 -right-2 w-4 h-4 rounded-full bg-amber-500 text-white text-xs flex items-center justify-center">
-                +
-              </span>
-            )}
-          </button>
-          <button 
-            className="btn-primary flex items-center gap-2"
-            onClick={() => setCreateDialogOpen(true)}
-          >
-            <FiPlus /> Add Task
-          </button>
-        </div>
-      </div>
-
-      {/* User Presence & Quick Filters */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-4">
-        <div className="flex flex-wrap items-center gap-2">
-          {projectId && <UserPresence projectId={projectId} />}
-          <div className="flex gap-2">
-            <button 
-              onClick={() => setFilters(prev => ({ ...prev, myTasks: !prev.myTasks }))}
-              className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
-                filters.myTasks 
-                  ? 'bg-primary-500 text-white' 
-                  : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
-              }`}
+                }`}
             >
-              My Tasks
+              <FiUsers />
+              {isOwner ? "Invite Team" : "View Team"} ({getTeamCount()})
+              {isOwner && getTeamCount() === 1 && (
+                <span className="absolute -top-2 -right-2 w-4 h-4 rounded-full bg-amber-500 text-white text-xs flex items-center justify-center">
+                  +
+                </span>
+              )}
             </button>
-            <button 
-              onClick={() => setFilters(prev => ({ ...prev, highPriority: !prev.highPriority }))}
-              className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
-                filters.highPriority 
-                  ? 'bg-primary-500 text-white' 
-                  : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
-              }`}
+            <button
+              className="btn-primary flex items-center gap-2"
+              onClick={() => setCreateDialogOpen(true)}
             >
-              High Priority
-            </button>
-            <button 
-              onClick={() => setFilters(prev => ({ ...prev, overdue: !prev.overdue }))}
-              className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
-                filters.overdue 
-                  ? 'bg-primary-500 text-white' 
-                  : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
-              }`}
-            >
-              Overdue
-            </button>
-            <button 
-              onClick={() => setFilters(prev => ({ ...prev, unassigned: !prev.unassigned }))}
-              className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
-                filters.unassigned 
-                  ? 'bg-primary-500 text-white' 
-                  : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
-              }`}
-            >
-              Unassigned
+              <FiPlus /> Add Task
             </button>
           </div>
         </div>
-        <div className="relative w-full md:w-80">
-          <FiSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-          <input
-            ref={searchRef}
-            type="text"
-            placeholder="Search tasks..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-10 pr-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-slate-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500"
-          />
+
+        {/* User Presence & Quick Filters */}
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-4">
+          <div className="flex flex-wrap items-center gap-2">
+            {projectId && <UserPresence projectId={projectId} />}
+            <div className="flex gap-2">
+              <button
+                onClick={() => setFilters(prev => ({ ...prev, myTasks: !prev.myTasks }))}
+                className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${filters.myTasks
+                  ? 'bg-primary-500 text-white'
+                  : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
+                  }`}
+              >
+                My Tasks
+              </button>
+              <button
+                onClick={() => setFilters(prev => ({ ...prev, highPriority: !prev.highPriority }))}
+                className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${filters.highPriority
+                  ? 'bg-primary-500 text-white'
+                  : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
+                  }`}
+              >
+                High Priority
+              </button>
+              <button
+                onClick={() => setFilters(prev => ({ ...prev, overdue: !prev.overdue }))}
+                className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${filters.overdue
+                  ? 'bg-primary-500 text-white'
+                  : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
+                  }`}
+              >
+                Overdue
+              </button>
+              <button
+                onClick={() => setFilters(prev => ({ ...prev, unassigned: !prev.unassigned }))}
+                className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${filters.unassigned
+                  ? 'bg-primary-500 text-white'
+                  : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
+                  }`}
+              >
+                Unassigned
+              </button>
+            </div>
+          </div>
+          <div className="relative w-full md:w-80">
+            <FiSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+            <input
+              ref={searchRef}
+              type="text"
+              placeholder="Search tasks..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full pl-10 pr-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-slate-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500"
+            />
+          </div>
         </div>
-      </div>
 
-      {/* Alerts */}
-      {getTeamCount() === 1 && (
-        <Alert severity="info" sx={{ mb: 2 }}>
-          <strong>Want to collaborate?</strong> Click "Team" to invite members to this project.
-        </Alert>
-      )}
+        {/* Alerts */}
+        {getTeamCount() === 1 && (
+          <Alert severity="info" sx={{ mb: 2 }}>
+            <strong>Want to collaborate?</strong> Click "Team" to invite members to this project.
+          </Alert>
+        )}
 
-      {error && (
-        <Alert severity="error" sx={{ mb: 2 }} onClose={() => setError('')}>
-          {error}
-        </Alert>
-      )}
+        {error && (
+          <Alert severity="error" sx={{ mb: 2 }} onClose={() => setError('')}>
+            {error}
+          </Alert>
+        )}
 
-      {/* Task Columns */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 min-h-[600px]">
-        {columns.map((column) => (
-          <TaskColumn
-            key={column.id}
-            title={column.title}
-            color={column.color}
-            tasks={tasks
-              .filter(task => task.status === column.id)
-              .filter(task => !filters.myTasks || (task.assignee && task.assignee._id === user?.id))
-              .filter(task => !filters.highPriority || task.priority === 'high')
-              .filter(task => !filters.overdue || (task.dueDate && new Date(task.dueDate) < new Date()))
-              .filter(task => !filters.unassigned || !task.assignee)
-              .filter(task => !searchTerm || task.title.toLowerCase().includes(searchTerm.toLowerCase()) || task.description?.toLowerCase().includes(searchTerm.toLowerCase()))
-            }
-            status={column.id as 'todo' | 'in-progress' | 'done'}
-            onEditTask={openEditDialog}
-            onDeleteTask={deleteTask}
-            onDragOver={handleDragOver}
-            onDrop={handleDrop}
-            onDragStart={handleDragStart}
+        {/* Task Columns */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 min-h-[600px]">
+          {columns.map((column) => (
+            <TaskColumn
+              key={column.id}
+              title={column.title}
+              color={column.color}
+              tasks={tasks
+                .filter(task => task.status === column.id)
+                .filter(task => !filters.myTasks || (task.assignee && task.assignee._id === user?.id))
+                .filter(task => !filters.highPriority || task.priority === 'high')
+                .filter(task => !filters.overdue || (task.dueDate && new Date(task.dueDate) < new Date()))
+                .filter(task => !filters.unassigned || !task.assignee)
+                .filter(task => !searchTerm || task.title.toLowerCase().includes(searchTerm.toLowerCase()) || task.description?.toLowerCase().includes(searchTerm.toLowerCase()))
+              }
+              status={column.id as 'todo' | 'in-progress' | 'done'}
+              onEditTask={openEditDialog}
+              onDeleteTask={deleteTask}
+              onDragOver={handleDragOver}
+              onDrop={handleDrop}
+              onDragStart={handleDragStart}
+            />
+          ))}
+        </div>
+
+        {/* Dialogs */}
+        <Dialog open={createDialogOpen} onClose={() => setCreateDialogOpen(false)} maxWidth="sm" fullWidth>
+          <TaskForm
+            project={project}
+            onSubmit={createTask}
+            onCancel={() => setCreateDialogOpen(false)}
+            formData={formData}
+            onFormDataChange={handleFormDataChange}
+            mode="create"
           />
-        ))}
+        </Dialog>
+
+        <Dialog open={editDialogOpen} onClose={() => setEditDialogOpen(false)} maxWidth="sm" fullWidth>
+          <TaskForm
+            task={editingTask}
+            project={project}
+            onSubmit={updateTask}
+            onCancel={() => setEditDialogOpen(false)}
+            formData={{
+              title: editingTask?.title || '',
+              description: editingTask?.description || '',
+              status: editingTask?.status || 'todo',
+              priority: editingTask?.priority || 'medium',
+              assignee: editingTask?.assignee?._id || '',
+              dueDate: editingTask?.dueDate ? new Date(editingTask.dueDate).toISOString().split('T')[0] : ''
+            }}
+            onFormDataChange={handleFormDataChange}
+            mode="edit"
+          />
+        </Dialog>
+
+        <TeamManagement
+          projectId={projectId!}
+          open={teamDialogOpen}
+          onClose={() => setTeamDialogOpen(false)}
+          onTeamUpdate={fetchProjectData}
+        />
       </div>
-
-      {/* Dialogs */}
-      <Dialog open={createDialogOpen} onClose={() => setCreateDialogOpen(false)} maxWidth="sm" fullWidth>
-        <TaskForm
-          project={project}
-          onSubmit={createTask}
-          onCancel={() => setCreateDialogOpen(false)}
-          formData={formData}
-          onFormDataChange={handleFormDataChange}
-          mode="create"
-        />
-      </Dialog>
-
-      <Dialog open={editDialogOpen} onClose={() => setEditDialogOpen(false)} maxWidth="sm" fullWidth>
-        <TaskForm
-          task={editingTask}
-          project={project}
-          onSubmit={updateTask}
-          onCancel={() => setEditDialogOpen(false)}
-          formData={{
-            title: editingTask?.title || '',
-            description: editingTask?.description || '',
-            status: editingTask?.status || 'todo',
-            priority: editingTask?.priority || 'medium',
-            assignee: editingTask?.assignee?._id || '',
-            dueDate: editingTask?.dueDate ? new Date(editingTask.dueDate).toISOString().split('T')[0] : ''
-          }}
-          onFormDataChange={handleFormDataChange}
-          mode="edit"
-        />
-      </Dialog>
-
-      <TeamManagement
-        projectId={projectId!}
-        open={teamDialogOpen}
-        onClose={() => setTeamDialogOpen(false)}
-        onTeamUpdate={fetchProjectData}
-      />
-    </div>
       {/* Floating Add Task Button */}
       <button
         onClick={() => setCreateDialogOpen(true)}
