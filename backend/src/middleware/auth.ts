@@ -1,11 +1,8 @@
 // teamflow/backend/src/middleware/auth.ts
-import { Request, Response, NextFunction } from 'express';
+import { Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
 import User from '../models/User';
-
-interface AuthRequest extends Request {
-  user?: any;
-}
+import { AuthRequest } from '../types/express';
 
 export const protect = async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
@@ -22,7 +19,7 @@ export const protect = async (req: AuthRequest, res: Response, next: NextFunctio
 
     // Verify token
     const decoded: any = jwt.verify(token, process.env.JWT_SECRET || 'your-secret-key');
-    
+
     // Get user from token
     const user = await User.findById(decoded.userId).select('-password');
     if (!user) {

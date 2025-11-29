@@ -15,6 +15,7 @@ import authRoutes from './routes/auth';
 import projectRoutes from './routes/projects';
 import taskRoutes from './routes/tasks';
 import usersRoutes from './routes/users';
+import teamEventRoutes from './routes/teamEventRoutes';
 
 dotenv.config();
 
@@ -46,24 +47,25 @@ mongoose.connect(MONGODB_URI, {
   serverSelectionTimeoutMS: 10000,
   socketTimeoutMS: 45000,
 })
-.then(() => {
-  console.log('✅ Successfully connected to MongoDB Atlas!');
-})
-.catch(err => {
-  console.error('❌ MongoDB connection failed:', err.message);
-  process.exit(1);
-});
+  .then(() => {
+    console.log('✅ Successfully connected to MongoDB Atlas!');
+  })
+  .catch(err => {
+    console.error('❌ MongoDB connection failed:', err.message);
+    process.exit(1);
+  });
 
 // Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/projects', projectRoutes);
 app.use('/api/tasks', taskRoutes);
 app.use('/api/users', usersRoutes);
+app.use('/api/team-events', teamEventRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => {
   const dbStatus = mongoose.connection.readyState === 1 ? 'Connected' : 'Disconnected';
-  res.json({ 
+  res.json({
     message: 'Server is running!',
     database: dbStatus,
     timestamp: new Date().toISOString()
@@ -93,16 +95,16 @@ io.on('connection', (socket) => {
     }
 
     console.log(`👤 ${user.name} joined project ${projectId}`);
-    
+
     socket.join(projectId);
-    
+
     // Initialize project users map if not exists
     if (!projectUsers.has(projectId)) {
       projectUsers.set(projectId, new Map());
     }
-    
+
     const users = projectUsers.get(projectId)!;
-    
+
     // Remove user if they already exist (prevent duplicates)
     for (const [existingSocketId, existingUser] of users.entries()) {
       if (existingUser.userId === user.userId) {
@@ -110,18 +112,18 @@ io.on('connection', (socket) => {
         break;
       }
     }
-    
+
     // Add user with current socket ID
-    users.set(socket.id, { 
-      ...user, 
+    users.set(socket.id, {
+      ...user,
       socketId: socket.id,
       joinedAt: new Date().toISOString()
     });
-    
+
     // Get all online users for this project
     const onlineUsers = Array.from(users.values());
     console.log(`📊 Online users in ${projectId}:`, onlineUsers.map((u: OnlineUser) => u.name));
-    
+
     // Notify everyone in the project
     io.to(projectId).emit('online-users', onlineUsers);
   });
@@ -134,13 +136,13 @@ io.on('connection', (socket) => {
     }
 
     console.log(`👤 User ${userId} left project ${projectId}`);
-    
+
     socket.leave(projectId);
-    
+
     if (projectUsers.has(projectId)) {
       const users = projectUsers.get(projectId)!;
       let removedUser = null;
-      
+
       // Find and remove the user
       for (const [socketId, user] of users.entries()) {
         if (user.userId === userId) {
@@ -149,7 +151,7 @@ io.on('connection', (socket) => {
           break;
         }
       }
-      
+
       if (removedUser) {
         // Notify others
         const onlineUsers = Array.from(users.values());
@@ -162,19 +164,19 @@ io.on('connection', (socket) => {
   // Handle disconnect - FIXED VERSION
   socket.on('disconnect', (reason) => {
     console.log('🔌 User disconnected:', socket.id, 'Reason:', reason);
-    
+
     // Remove user from all projects
     projectUsers.forEach((users, projectId) => {
       if (users.has(socket.id)) {
         const user = users.get(socket.id)!;
         users.delete(socket.id);
-        
+
         // Notify others only if there are still users to notify
         if (users.size > 0) {
           const onlineUsers = Array.from(users.values());
           io.to(projectId).emit('online-users', onlineUsers);
         }
-        
+
         console.log(`🗑️ Removed ${user.name} from project ${projectId}`);
       }
     });

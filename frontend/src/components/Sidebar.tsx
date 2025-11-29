@@ -16,13 +16,17 @@ interface SidebarProps {
   onSectionChange?: (section: string) => void;
   teamMembers?: Array<{ _id: string; name: string; email: string; isOnline?: boolean }>;
   onlineUsers?: Array<{ userId: string; name: string }>;
+  isOpen: boolean;
+  onClose: () => void;
 }
 
-const Sidebar: React.FC<SidebarProps> = ({ 
-  activeSection, 
-  onSectionChange, 
+const Sidebar: React.FC<SidebarProps> = ({
+  activeSection,
+  onSectionChange,
   teamMembers = [],
-  onlineUsers = []
+  onlineUsers = [],
+  isOpen,
+  onClose
 }) => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
@@ -30,105 +34,124 @@ const Sidebar: React.FC<SidebarProps> = ({
   const menuItems = [
     { id: 'dashboard', text: 'Dashboard', icon: <FiHome className="w-5 h-5" />, path: '/' },
     { id: 'projects', text: 'Projects', icon: <FiFolder className="w-5 h-5" />, path: '/' },
-    { id: 'team', text: 'Team', icon: <FiUsers className="w-5 h-5" />, path: '/' },
-    { id: 'calendar', text: 'Calendar', icon: <FiCalendar className="w-5 h-5" />, path: '/' },
+    { id: 'team', text: 'Team', icon: <FiUsers className="w-5 h-5" />, path: '/teams' },
+    { id: 'calendar', text: 'Calendar', icon: <FiCalendar className="w-5 h-5" />, path: '/calendar' },
     { id: 'analytics', text: 'Analytics', icon: <FiBarChart2 className="w-5 h-5" />, path: '/' },
     { id: 'settings', text: 'Settings', icon: <FiSettings className="w-5 h-5" />, path: '/' },
   ];
 
   const handleMenuClick = (item: typeof menuItems[0]) => {
-    if (onSectionChange) {
+    // Check if item has a specific path and navigate to it, or use onSectionChange if available
+    if (item.id === 'dashboard' || item.id === 'calendar' || item.id === 'team') {
+      navigate(item.path);
+    } else if (onSectionChange) {
+      // If onSectionChange is provided (we're on Dashboard), use it for internal sections
       onSectionChange(item.id);
     } else {
-      navigate(item.path);
+      // If no onSectionChange (we're on Calendar/Teams), navigate to Dashboard
+      // The Dashboard will handle showing the default view
+      navigate('/');
+    }
+    // Close sidebar on mobile when item is clicked
+    if (window.innerWidth < 768) {
+      onClose();
     }
   };
 
   return (
-    <div 
-      className="w-[280px] flex-shrink-0 bg-gradient-to-b from-indigo-600 to-purple-700 text-white flex flex-col"
-      style={{ height: '100vh', position: 'fixed' }}
-    >
-      <div className="p-6">
-        <h1 className="text-2xl font-bold mb-1">
-          TeamFlow
-        </h1>
-        <p className="text-sm opacity-80">
-          Project Management
-        </p>
-      </div>
+    <>
+      {/* Mobile Backdrop */}
+      {isOpen && (
+        <div
+          className="fixed inset-0 bg-black/50 z-40 md:hidden"
+          onClick={onClose}
+        />
+      )}
 
-      <nav className="px-4 mt-4 flex-1 overflow-y-auto">
-        {menuItems.map((item) => (
-          <button
-            key={item.id}
-            onClick={() => handleMenuClick(item)}
-            className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg mb-2 transition-all ${
-              activeSection === item.id
+      {/* Sidebar */}
+      <div
+        className={`fixed inset-y-0 left-0 z-50 w-[280px] bg-gradient-to-b from-indigo-600 to-purple-700 text-white flex flex-col transition-transform duration-300 ease-in-out ${isOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'
+          }`}
+      >
+        <div className="p-6">
+          <h1 className="text-2xl font-bold mb-1">
+            TeamFlow
+          </h1>
+          <p className="text-sm opacity-80">
+            Project Management
+          </p>
+        </div>
+
+        <nav className="px-4 mt-4 flex-1 overflow-y-auto">
+          {menuItems.map((item) => (
+            <button
+              key={item.id}
+              onClick={() => handleMenuClick(item)}
+              className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg mb-2 transition-all ${activeSection === item.id
                 ? 'bg-white/20 border-2 border-white/80'
                 : 'border-2 border-transparent hover:bg-white/10'
-            }`}
-          >
-            <span className="text-white">{item.icon}</span>
-            <span className={`text-white ${activeSection === item.id ? 'font-semibold' : 'font-normal'}`}>
-              {item.text}
-            </span>
-          </button>
-        ))}
-      </nav>
+                }`}
+            >
+              <span className="text-white">{item.icon}</span>
+              <span className={`text-white ${activeSection === item.id ? 'font-semibold' : 'font-normal'}`}>
+                {item.text}
+              </span>
+            </button>
+          ))}
+        </nav>
 
-      {/* Sidebar Footer */}
-      <div className="mt-auto p-4">
-        <div className="border-t border-white/20 pt-4 mb-4">
-          {/* Team Online Status */}
-          {teamMembers.length > 0 && (
-            <div className="mb-4">
-              <p className="text-sm text-white/80 mb-2">
-                Team Online
-              </p>
-              <div className="flex items-center gap-2">
-                <div className="flex -space-x-2">
-                  {teamMembers.slice(0, 3).map((member) => (
-                    <div 
-                      key={member._id}
-                      className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-semibold text-white border-2 border-white ${
-                        onlineUsers.some(u => u.userId === member._id) ? 'bg-green-500' : 'bg-gray-500'
-                      }`}
-                    >
-                      {member.name.charAt(0).toUpperCase()}
-                    </div>
-                  ))}
+        {/* Sidebar Footer */}
+        <div className="mt-auto p-4">
+          <div className="border-t border-white/20 pt-4 mb-4">
+            {/* Team Online Status */}
+            {teamMembers.length > 0 && (
+              <div className="mb-4">
+                <p className="text-sm text-white/80 mb-2">
+                  Team Online
+                </p>
+                <div className="flex items-center gap-2">
+                  <div className="flex -space-x-2">
+                    {teamMembers.slice(0, 3).map((member) => (
+                      <div
+                        key={member._id}
+                        className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-semibold text-white border-2 border-white ${onlineUsers.some(u => u.userId === member._id) ? 'bg-green-500' : 'bg-gray-500'
+                          }`}
+                      >
+                        {member.name.charAt(0).toUpperCase()}
+                      </div>
+                    ))}
+                  </div>
+                  <span className="text-xs text-white/70">
+                    {onlineUsers.length}/{teamMembers.length} online
+                  </span>
                 </div>
-                <span className="text-xs text-white/70">
-                  {onlineUsers.length}/{teamMembers.length} online
-                </span>
+              </div>
+            )}
+
+            {/* User Info and Logout */}
+            <div className="flex items-center mb-3">
+              <div className="w-10 h-10 rounded-full bg-green-500 flex items-center justify-center text-white font-semibold mr-3">
+                {user?.name?.charAt(0).toUpperCase()}
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-semibold text-white truncate">
+                  {user?.name}
+                </p>
+                <p className="text-xs text-white/80 truncate">
+                  {user?.email}
+                </p>
               </div>
             </div>
-          )}
-
-          {/* User Info and Logout */}
-          <div className="flex items-center mb-3">
-            <div className="w-10 h-10 rounded-full bg-green-500 flex items-center justify-center text-white font-semibold mr-3">
-              {user?.name?.charAt(0).toUpperCase()}
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-semibold text-white truncate">
-                {user?.name}
-              </p>
-              <p className="text-xs text-white/80 truncate">
-                {user?.email}
-              </p>
-            </div>
+            <button
+              onClick={logout}
+              className="w-full flex items-center gap-2 px-4 py-2 text-white hover:bg-white/10 rounded-lg transition-colors"
+            >
+              <FiLogOut /> Logout
+            </button>
           </div>
-          <button
-            onClick={logout}
-            className="w-full flex items-center gap-2 px-4 py-2 text-white hover:bg-white/10 rounded-lg transition-colors"
-          >
-            <FiLogOut /> Logout
-          </button>
         </div>
       </div>
-    </div>
+    </>
   );
 };
 

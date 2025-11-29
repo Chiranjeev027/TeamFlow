@@ -25,6 +25,7 @@ const ProjectPage: React.FC<ProjectPageProps> = ({ toggleDarkMode, darkMode }) =
   const navigate = useNavigate();
   const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
   const [onlineUsers, _setOnlineUsers] = useState<any[]>([]);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   useEffect(() => {
     const fetchProjectData = async () => {
@@ -41,7 +42,7 @@ const ProjectPage: React.FC<ProjectPageProps> = ({ toggleDarkMode, darkMode }) =
         console.error('Error fetching project data:', error);
       }
     };
-    
+
     fetchProjectData();
   }, [_projectId]);
 
@@ -65,7 +66,7 @@ const ProjectPage: React.FC<ProjectPageProps> = ({ toggleDarkMode, darkMode }) =
   return (
     <div className="flex min-h-screen bg-slate-50 dark:bg-slate-900 overflow-hidden">
       {/* Sidebar Component */}
-      <Sidebar 
+      <Sidebar
         activeSection="projects"
         onSectionChange={(section) => {
           if (section === 'dashboard') navigate('/');
@@ -73,15 +74,18 @@ const ProjectPage: React.FC<ProjectPageProps> = ({ toggleDarkMode, darkMode }) =
         }}
         teamMembers={teamMembers}
         onlineUsers={onlineUsers}
+        isOpen={isSidebarOpen}
+        onClose={() => setIsSidebarOpen(false)}
       />
 
       {/* Main Content */}
-      <div className="flex-1 ml-[280px] w-[calc(100%-280px)] overflow-auto">
+      <div className="flex-1 md:ml-[280px] w-full md:w-[calc(100%-280px)] overflow-auto">
         {/* TopBar Component */}
-        <TopBar 
+        <TopBar
           title="Project Board"
           toggleDarkMode={toggleDarkMode!}
           darkMode={darkMode!}
+          onMenuClick={() => setIsSidebarOpen(true)}
           rightContent={
             <button
               onClick={handleExportProject}
@@ -91,7 +95,7 @@ const ProjectPage: React.FC<ProjectPageProps> = ({ toggleDarkMode, darkMode }) =
             </button>
           }
         />
-        
+
         <div className="mt-8 pb-8 px-6 w-full grid grid-cols-1 lg:grid-cols-[3fr_1fr] gap-6">
           <div>
             <TaskBoard />

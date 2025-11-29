@@ -1,4 +1,3 @@
-// teamflow/frontend/src/components/ProjectList.tsx
 import React, { useState, useEffect, forwardRef, useImperativeHandle } from 'react';
 import { Dialog } from '@mui/material';
 import { FiPlus, FiMoreHorizontal, FiUsers, FiCalendar } from 'react-icons/fi';
@@ -51,9 +50,9 @@ const ProjectList = forwardRef<ProjectListRef, ProjectListProps>(({ onProjectCre
           'Authorization': `Bearer ${token}`
         }
       });
-      
+
       if (!response.ok) throw new Error('Failed to fetch projects');
-      
+
       const data = await response.json();
       setProjects(data);
       // compute progress for each project (batch request)
@@ -68,12 +67,12 @@ const ProjectList = forwardRef<ProjectListRef, ProjectListProps>(({ onProjectCre
         });
 
         if (resp.ok) {
-            const analyticsMap = await resp.json();
-            for (const id of ids) {
-              progressObj[id] = analyticsMap[id]?.completionRate || 0;
-            }
-            setProjectAnalytics(analyticsMap);
-          } else {
+          const analyticsMap = await resp.json();
+          for (const id of ids) {
+            progressObj[id] = analyticsMap[id]?.completionRate || 0;
+          }
+          setProjectAnalytics(analyticsMap);
+        } else {
           // If batch fails, fall back to zero progress for all
           ids.forEach((id: string) => { progressObj[id] = 0; });
         }
@@ -111,14 +110,14 @@ const ProjectList = forwardRef<ProjectListRef, ProjectListProps>(({ onProjectCre
         },
         body: JSON.stringify(formData)
       });
-      
+
       if (!response.ok) throw new Error('Failed to create project');
-      
+
       const newProject = await response.json();
       setProjects([...projects, newProject]);
       setFormData({ name: '', description: '' });
       setOpen(false);
-      
+
       // Call the callback to ensure we stay on the projects view
       if (onProjectCreated) {
         onProjectCreated();
@@ -153,6 +152,20 @@ const ProjectList = forwardRef<ProjectListRef, ProjectListProps>(({ onProjectCre
       {/* Projects Grid */}
       {projects.length > 0 ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 w-full">
+          <div
+            onClick={() => setOpen(true)}
+            className="card p-6 cursor-pointer h-full border-2 border-dashed border-gray-300 dark:border-gray-600 hover:border-primary-500 dark:hover:border-primary-500 flex flex-col items-center justify-center text-center transition-all duration-300 group min-h-[200px]"
+          >
+            <div className="w-16 h-16 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center mb-4 group-hover:bg-primary-50 dark:group-hover:bg-primary-900/20 transition-colors">
+              <FiPlus className="w-8 h-8 text-gray-400 group-hover:text-primary-500 transition-colors" />
+            </div>
+            <h3 className="text-lg font-semibold text-gray-700 dark:text-gray-300 group-hover:text-primary-500 transition-colors">
+              Create New Project
+            </h3>
+            <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">
+              Start a new project for your team
+            </p>
+          </div>
           {projects.map((project) => (
             <div
               key={project._id}
@@ -261,10 +274,10 @@ const ProjectList = forwardRef<ProjectListRef, ProjectListProps>(({ onProjectCre
       )}
 
       {/* Create Project Dialog */}
-      <Dialog 
-        open={open} 
-        onClose={() => setOpen(false)} 
-        maxWidth="sm" 
+      <Dialog
+        open={open}
+        onClose={() => setOpen(false)}
+        maxWidth="sm"
         fullWidth
         PaperProps={{
           sx: { borderRadius: 3, bgcolor: 'background.paper', color: 'text.primary' }
@@ -277,7 +290,7 @@ const ProjectList = forwardRef<ProjectListRef, ProjectListProps>(({ onProjectCre
           <p className="text-sm text-gray-600 dark:text-gray-400 mb-6">
             Start a new project to organize your tasks and collaborate with your team.
           </p>
-          
+
           <div className="mb-4">
             <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">
               Project Name *
@@ -290,7 +303,7 @@ const ProjectList = forwardRef<ProjectListRef, ProjectListProps>(({ onProjectCre
               className="input-field bg-white dark:bg-slate-700 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-400"
             />
           </div>
-          
+
           <div className="mb-6">
             <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">
               Description
@@ -303,16 +316,16 @@ const ProjectList = forwardRef<ProjectListRef, ProjectListProps>(({ onProjectCre
               className="input-field resize-none bg-white dark:bg-slate-700 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-400"
             />
           </div>
-          
+
           <div className="flex gap-3 justify-end">
-            <button 
+            <button
               type="button"
               onClick={() => setOpen(false)}
               className="px-6 py-2 rounded-lg font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
             >
               Cancel
             </button>
-            <button 
+            <button
               type="submit"
               className="btn-primary px-6 py-2"
             >

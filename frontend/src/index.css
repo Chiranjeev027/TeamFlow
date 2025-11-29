@@ -1,3 +1,6 @@
+/* Calendar Styles */
+@import './styles/calendar.css';
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -19,23 +22,24 @@
   .btn-primary {
     @apply px-4 py-2 bg-primary-500 text-white rounded-lg font-semibold hover:bg-primary-600 transition-colors;
   }
-  
+
   .btn-secondary {
     @apply px-4 py-2 bg-secondary-500 text-white rounded-lg font-semibold hover:bg-secondary-600 transition-colors;
   }
-  
+
   .btn-outline {
     @apply px-4 py-2 border-2 border-primary-500 text-primary-500 rounded-lg font-semibold hover:bg-primary-50 dark:hover:bg-primary-900/20 transition-colors;
   }
-  
+
   .card {
     @apply rounded-xl bg-white dark:bg-slate-800 shadow-light dark:shadow-dark p-4;
   }
-  
+
   .input-field {
     @apply w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-slate-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500;
   }
 }
+
 button:focus,
 button:focus-visible {
   outline: 4px auto -webkit-focus-ring-color;
@@ -46,9 +50,11 @@ button:focus-visible {
     color: #213547;
     background-color: #ffffff;
   }
+
   a:hover {
     color: #747bff;
   }
+
   button {
     background-color: #f9f9f9;
   }

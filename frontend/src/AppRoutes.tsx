@@ -6,6 +6,7 @@ import AuthPage from './pages/AuthPage';
 import Dashboard from './pages/Dashboard';
 import ProjectPage from './pages/ProjectPage';
 import TeamsPage from './pages/TeamsPage';
+import CalendarPage from './pages/CalendarPage';
 
 
 interface AppRoutesProps {
@@ -22,23 +23,27 @@ const AppRoutes: React.FC<AppRoutesProps> = ({ toggleDarkMode, darkMode }) => {
 
   return (
     <Routes>
-      <Route 
-        path="/auth" 
-        element={!user ? <AuthPage /> : <Navigate to="/" />} 
+      <Route
+        path="/auth"
+        element={!user ? <AuthPage /> : <Navigate to="/" />}
       />
-      <Route 
-        path="/" 
-        element={user ? <Dashboard toggleDarkMode={toggleDarkMode} darkMode={darkMode} /> : <Navigate to="/auth" />} 
+      <Route
+        path="/"
+        element={user ? <Dashboard toggleDarkMode={toggleDarkMode} darkMode={darkMode} /> : <Navigate to="/auth" />}
       />
-      <Route 
-        path="/project/:projectId" 
-        element={user ? <ProjectPage toggleDarkMode={toggleDarkMode} darkMode={darkMode} /> : <Navigate to="/auth" />} 
+      <Route
+        path="/project/:projectId"
+        element={user ? <ProjectPage toggleDarkMode={toggleDarkMode} darkMode={darkMode} /> : <Navigate to="/auth" />}
+      />
+      <Route
+        path="/teams"
+        element={user ? <TeamsPage toggleDarkMode={toggleDarkMode} darkMode={darkMode} /> : <Navigate to="/auth" />}
+      />
+      <Route
+        path="/calendar"
+        element={user ? <CalendarPage toggleDarkMode={toggleDarkMode} darkMode={darkMode} /> : <Navigate to="/auth" />}
       />
       <Route path="*" element={<Navigate to="/" />} />
-      <Route 
-        path="/teams" 
-        element={user ? <TeamsPage /> : <Navigate to="/auth" />} 
-      />
     </Routes>
   );
 };

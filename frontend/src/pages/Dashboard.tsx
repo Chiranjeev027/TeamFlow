@@ -1,12 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { useAuth } from '../context/AuthContext';
 import {
   FiFolder,
   FiUsers,
   FiBarChart2,
   FiCalendar,
-  FiCheckCircle,
-  FiPlus
+  FiCheckCircle
 } from 'react-icons/fi';
 import ProjectList from '../components/ProjectList';
 import TeamManagementSidebar from '../components/TeamManagementSidebar';
@@ -14,6 +12,11 @@ import AnalyticsDashboard from '../components/AnalyticsDashboard';
 import UserSettings from '../components/UserSettings';
 import Sidebar from '../components/Sidebar';
 import TopBar from '../components/TopBar';
+import RecentActivityFeed from '../components/RecentActivityFeed';
+import UpcomingDeadlines from '../components/UpcomingDeadlines';
+import TeamAvailability from '../components/TeamAvailability';
+import ProjectProgressList from '../components/ProjectProgressList';
+import QuickNotes from '../components/QuickNotes';
 
 interface DashboardProps {
   toggleDarkMode: () => void;
@@ -38,7 +41,7 @@ interface TeamMember {
 }
 
 const Dashboard: React.FC<DashboardProps> = ({ toggleDarkMode, darkMode }) => {
-  const { user } = useAuth();
+  // const { user } = useAuth();
   const [activeSection, setActiveSection] = useState('dashboard');
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState<DashboardStats>({
@@ -51,26 +54,40 @@ const Dashboard: React.FC<DashboardProps> = ({ toggleDarkMode, darkMode }) => {
   const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
   interface OnlineUser { userId: string; name: string; email?: string; projectId?: string }
   const [onlineUsers, setOnlineUsers] = useState<OnlineUser[]>([]);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   const fetchDashboardData = async () => {
     try {
       const token = localStorage.getItem('token');
-      
+
       // Fetch projects
       const projectsResponse = await fetch('/api/projects', {
         headers: { 'Authorization': `Bearer ${token}` }
       });
-      
-      if (!projectsResponse.ok) throw new Error('Failed to fetch projects');
-      const projectsData = await projectsResponse.json();
 
-      // Fetch tasks
-      const tasksResponse = await fetch('/api/tasks', {
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-      
-      if (!tasksResponse.ok) throw new Error('Failed to fetch tasks');
-      const tasksData = await tasksResponse.json();
+      if (!projectsResponse.ok) {
+        console.error('Projects API failed:', projectsResponse.status, projectsResponse.statusText);
+        throw new Error('Failed to fetch projects');
+      }
+      const projectsData = await projectsResponse.json();
+      console.log('Projects data:', projectsData);
+
+      // Fetch tasks (make this optional to not block project stats)
+      let tasksData: any[] = [];
+      try {
+        const tasksResponse = await fetch('/api/tasks', {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+
+        if (tasksResponse.ok) {
+          tasksData = await tasksResponse.json();
+          console.log('Tasks data:', tasksData);
+        } else {
+          console.warn('Tasks API failed, continuing without task stats:', tasksResponse.status);
+        }
+      } catch (taskError) {
+        console.warn('Error fetching tasks, continuing without task stats:', taskError);
+      }
 
       // Calculate stats
       const activeProjects = projectsData.filter((p: any) => p.status !== 'completed').length;
@@ -79,24 +96,53 @@ const Dashboard: React.FC<DashboardProps> = ({ toggleDarkMode, darkMode }) => {
       const completionRate = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
 
       // Extract unique team members from all projects
-      const allTeamMembers = projectsData.reduce((acc: TeamMember[], project: any) => {
-        return [...acc, ...project.team];
-      }, []);
+      const allTeamMembersMap = new Map<string, TeamMember>();
 
-      const uniqueTeamMembers = Array.from(
-        new Map(allTeamMembers.map((member: TeamMember) => [member._id, member])).values()
-      ) as TeamMember[];
+      projectsData.forEach((project: any) => {
+        // Add owner
+        if (project.owner && project.owner._id) {
+          if (!allTeamMembersMap.has(project.owner._id)) {
+            allTeamMembersMap.set(project.owner._id, {
+              _id: project.owner._id,
+              name: project.owner.name || 'Unknown',
+              email: project.owner.email || '',
+              role: 'admin',
+              isOnline: false
+            });
+          }
+        }
 
-      setStats({
+        // Add members
+        if (project.members && Array.isArray(project.members)) {
+          project.members.forEach((member: any) => {
+            if (member._id && !allTeamMembersMap.has(member._id)) {
+              allTeamMembersMap.set(member._id, {
+                _id: member._id,
+                name: member.name || 'Unknown',
+                email: member.email || '',
+                role: 'member',
+                isOnline: false
+              });
+            }
+          });
+        }
+      });
+
+      const uniqueTeamMembers = Array.from(allTeamMembersMap.values());
+
+      const newStats = {
         totalProjects: projectsData.length,
         totalTeamMembers: uniqueTeamMembers.length,
         activeProjects,
         completedTasks,
         completionRate
-      });
+      };
 
+      console.log('Setting stats:', newStats);
+
+      setStats(newStats);
       setTeamMembers(uniqueTeamMembers);
-      
+
     } catch (error) {
       console.error('Error fetching dashboard data:', error);
     } finally {
@@ -110,7 +156,7 @@ const Dashboard: React.FC<DashboardProps> = ({ toggleDarkMode, darkMode }) => {
       const response = await fetch('/api/users/online', {
         headers: { 'Authorization': `Bearer ${token}` }
       });
-      
+
       if (response.ok) {
         const onlineUsersData = await response.json();
         setOnlineUsers(onlineUsersData);
@@ -123,15 +169,15 @@ const Dashboard: React.FC<DashboardProps> = ({ toggleDarkMode, darkMode }) => {
   useEffect(() => {
     fetchDashboardData();
     fetchOnlineUsers();
-    
+
     const interval = setInterval(fetchOnlineUsers, 30000);
     return () => clearInterval(interval);
   }, []);
 
   const StatCard = ({ title, value, icon, color, subtitle }: any) => (
-    <div 
+    <div
       className={`card p-6 h-full transition-all duration-200 hover:-translate-y-1 hover:shadow-xl`}
-      style={{ 
+      style={{
         background: `linear-gradient(135deg, ${color} 0%, ${color}dd 100%)`,
         color: 'white'
       }}
@@ -196,40 +242,22 @@ const Dashboard: React.FC<DashboardProps> = ({ toggleDarkMode, darkMode }) => {
               />
             </div>
 
-            {/* Quick Actions */}
-            <div className="card p-6">
-              <div className="flex justify-between items-center mb-6">
-                <h2 className="text-2xl font-semibold">Quick Actions</h2>
-                <div className="flex gap-2">
-                  <button
-                    className="btn-primary flex items-center gap-2"
-                    onClick={() => window.location.href = '/projects'}
-                  >
-                    <FiPlus /> Projects
-                  </button>
-                  <button
-                    className="btn-outline flex items-center gap-2"
-                    onClick={() => window.location.href = '/teams'}
-                  >
-                    <FiUsers /> Team
-                  </button>
-                </div>
+            {/* Enhanced Dashboard Content - 2 Column Layout */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              {/* Main Content - Left Side (2/3 width) */}
+              <div className="lg:col-span-2 space-y-6">
+                <RecentActivityFeed />
+                <ProjectProgressList onRefresh={fetchDashboardData} />
               </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="p-4 bg-white dark:bg-slate-800 rounded-lg">
-                  <h3 className="font-semibold">Create a Project</h3>
-                  <p className="text-sm text-gray-500 dark:text-gray-400">Start a project for your team.</p>
-                  <div className="mt-3">
-                    <button className="btn-primary" onClick={() => window.location.href = '/projects'}>Create Project</button>
-                  </div>
-                </div>
-                <div className="p-4 bg-white dark:bg-slate-800 rounded-lg">
-                  <h3 className="font-semibold">Invite a Member</h3>
-                  <p className="text-sm text-gray-500 dark:text-gray-400">Invite teammates and collaborate faster.</p>
-                  <div className="mt-3">
-                    <button className="btn-outline" onClick={() => window.location.href = '/teams'}>Invite Member</button>
-                  </div>
-                </div>
+
+              {/* Sidebar Widgets - Right Side (1/3 width) */}
+              <div className="lg:col-span-1 space-y-6">
+                <TeamAvailability
+                  teamMembers={teamMembers}
+                  onlineUsers={onlineUsers}
+                />
+                <UpcomingDeadlines />
+                <QuickNotes />
               </div>
             </div>
           </>
@@ -238,15 +266,13 @@ const Dashboard: React.FC<DashboardProps> = ({ toggleDarkMode, darkMode }) => {
       case 'projects':
         return (
           <div className="card p-6 min-h-[600px]">
-              <div className="flex justify-between items-center mb-6">
-                <h1 className="text-3xl font-semibold">
-                  All Projects
-                </h1>
-                <button className="btn-primary flex items-center gap-2" onClick={() => window.location.href = '/projects'}>
-                  <FiPlus /> New Project
-                </button>
-              </div>
-              <ProjectList ref={projectListRef} onProjectCreated={fetchDashboardData} />
+            <div className="flex justify-between items-center mb-6">
+              <h1 className="text-3xl font-semibold">
+                All Projects
+              </h1>
+
+            </div>
+            <ProjectList ref={projectListRef} onProjectCreated={fetchDashboardData} />
           </div>
         );
 
@@ -309,22 +335,25 @@ const Dashboard: React.FC<DashboardProps> = ({ toggleDarkMode, darkMode }) => {
   return (
     <div className="flex min-h-screen bg-slate-50 dark:bg-slate-900 overflow-hidden">
       {/* Sidebar Component */}
-      <Sidebar 
+      <Sidebar
         activeSection={activeSection}
         onSectionChange={setActiveSection}
         teamMembers={teamMembers}
         onlineUsers={onlineUsers}
+        isOpen={isSidebarOpen}
+        onClose={() => setIsSidebarOpen(false)}
       />
 
       {/* Main Content */}
-      <div className="flex-1 ml-[280px] w-[calc(100%-280px)] overflow-auto">
+      <div className="flex-1 md:ml-[280px] w-full md:w-[calc(100%-280px)] overflow-auto">
         {/* TopBar Component */}
-        <TopBar 
+        <TopBar
           title={getSectionTitle()}
           toggleDarkMode={toggleDarkMode}
           darkMode={darkMode}
+          onMenuClick={() => setIsSidebarOpen(true)}
         />
-        
+
         <div className="mt-8 pb-8 px-6 w-full max-w-full">
           {renderMainContent()}
         </div>

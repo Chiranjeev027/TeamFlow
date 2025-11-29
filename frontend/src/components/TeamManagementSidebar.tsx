@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { 
-  FiUsers, 
-  FiUserPlus, 
-  FiWifi, 
-  FiShield, 
-  FiTool, 
-  FiEye, 
+import {
+  FiUsers,
+  FiUserPlus,
+  FiWifi,
+  FiShield,
+  FiTool,
+  FiEye,
   FiMoreVertical,
   FiEdit2,
   FiTrash2
@@ -52,18 +52,18 @@ const TeamManagementSidebar: React.FC = () => {
       setLoading(true);
       setError('');
       const token = localStorage.getItem('token');
-      
+
       // Fetch projects to get team members
       const projectsResponse = await fetch('/api/projects', {
         headers: { 'Authorization': `Bearer ${token}` }
       });
-      
+
       if (!projectsResponse.ok) throw new Error('Failed to fetch projects');
       const projects: Project[] = await projectsResponse.json();
 
       // Calculate unique team members across all projects
       const allTeamMembers = new Map();
-      
+
       projects.forEach((project: Project) => {
         // Add owner as admin
         if (!allTeamMembers.has(project.owner._id)) {
@@ -79,7 +79,7 @@ const TeamManagementSidebar: React.FC = () => {
           const member = allTeamMembers.get(project.owner._id);
           member.projects += 1;
         }
-        
+
         // Add members
         project.members.forEach((member: any) => {
           if (!allTeamMembers.has(member._id)) {
@@ -104,7 +104,7 @@ const TeamManagementSidebar: React.FC = () => {
       const onlineResponse = await fetch('/api/users/online', {
         headers: { 'Authorization': `Bearer ${token}` }
       });
-      
+
       if (onlineResponse.ok) {
         const onlineUsers = await onlineResponse.json();
         // Update team members with online status
@@ -129,14 +129,10 @@ const TeamManagementSidebar: React.FC = () => {
     fetchTeamData();
   }, []);
 
-  const handleTabChange = (_event: React.SyntheticEvent, newValue: number) => {
-    setTabValue(newValue);
-  };
-
   const handleMenuOpen = (event: React.MouseEvent<HTMLElement>, member: TeamMember) => {
     const rect = event.currentTarget.getBoundingClientRect();
-    setMenuPosition({ 
-      top: rect.bottom + 5, 
+    setMenuPosition({
+      top: rect.bottom + 5,
       left: rect.left - 150
     });
     setAnchorEl(event.currentTarget);
@@ -241,9 +237,8 @@ const TeamManagementSidebar: React.FC = () => {
               <div
                 key={member._id}
                 title={member.name}
-                className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-semibold text-white border-2 border-white dark:border-gray-800 ${
-                  member.isOnline ? 'bg-green-500 ring-2 ring-green-300' : 'bg-gray-400'
-                }`}
+                className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-semibold text-white border-2 border-white dark:border-gray-800 ${member.isOnline ? 'bg-green-500 ring-2 ring-green-300' : 'bg-gray-400'
+                  }`}
               >
                 {member.name.charAt(0)}
               </div>
@@ -274,31 +269,28 @@ const TeamManagementSidebar: React.FC = () => {
         <div className="flex border-b border-gray-200 dark:border-gray-700 mb-4">
           <button
             onClick={() => setTabValue(0)}
-            className={`px-4 py-2 font-medium transition-colors ${
-              tabValue === 0
+            className={`px-4 py-2 font-medium transition-colors ${tabValue === 0
                 ? 'text-primary-500 border-b-2 border-primary-500'
                 : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
-            }`}
+              }`}
           >
             Team Members
           </button>
           <button
             onClick={() => setTabValue(1)}
-            className={`px-4 py-2 font-medium transition-colors ${
-              tabValue === 1
+            className={`px-4 py-2 font-medium transition-colors ${tabValue === 1
                 ? 'text-primary-500 border-b-2 border-primary-500'
                 : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
-            }`}
+              }`}
           >
             Performance Analytics
           </button>
           <button
             onClick={() => setTabValue(2)}
-            className={`px-4 py-2 font-medium transition-colors ${
-              tabValue === 2
+            className={`px-4 py-2 font-medium transition-colors ${tabValue === 2
                 ? 'text-primary-500 border-b-2 border-primary-500'
                 : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
-            }`}
+              }`}
           >
             Team Settings
           </button>
@@ -315,9 +307,8 @@ const TeamManagementSidebar: React.FC = () => {
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
                       <div
-                        className={`w-10 h-10 rounded-full flex items-center justify-center text-white font-semibold ${
-                          member.isOnline ? 'bg-green-500 ring-2 ring-green-300' : 'bg-gray-400'
-                        }`}
+                        className={`w-10 h-10 rounded-full flex items-center justify-center text-white font-semibold ${member.isOnline ? 'bg-green-500 ring-2 ring-green-300' : 'bg-gray-400'
+                          }`}
                       >
                         {member.name.charAt(0)}
                       </div>
@@ -360,13 +351,13 @@ const TeamManagementSidebar: React.FC = () => {
               {/* Context Menu */}
               {anchorEl && selectedMember && (
                 <>
-                  <div 
+                  <div
                     className="fixed inset-0 z-10"
                     onClick={handleMenuClose}
                   />
-                  <div 
+                  <div
                     className="fixed bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg py-1 min-w-[200px] z-20"
-                    style={{ 
+                    style={{
                       top: `${menuPosition.top}px`,
                       left: `${menuPosition.left}px`
                     }}
@@ -405,7 +396,7 @@ const TeamManagementSidebar: React.FC = () => {
       </div>
 
       {/* Invite Member Dialog */}
-      <InviteMemberDialog 
+      <InviteMemberDialog
         open={inviteDialogOpen}
         onClose={() => setInviteDialogOpen(false)}
         onInvite={async (email, role) => {
