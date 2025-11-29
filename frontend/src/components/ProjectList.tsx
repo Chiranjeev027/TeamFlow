@@ -1,8 +1,8 @@
 // teamflow/frontend/src/components/ProjectList.tsx
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, forwardRef, useImperativeHandle } from 'react';
 import { Dialog } from '@mui/material';
 import { FiPlus, FiMoreHorizontal, FiUsers, FiCalendar } from 'react-icons/fi';
-import { useAuth } from '../context/AuthContext';
+// No auth usage required here
 import { useNavigate } from 'react-router-dom';
 
 interface Project {
@@ -28,8 +28,13 @@ interface ProjectAnalytics {
   completionRate: number;
 }
 
-const ProjectList: React.FC<ProjectListProps> = ({ onProjectCreated }) => {
-  const { user } = useAuth();
+interface ProjectListRef {
+  openDialog: () => void;
+  closeDialog: () => void;
+}
+
+const ProjectList = forwardRef<ProjectListRef, ProjectListProps>(({ onProjectCreated }, ref) => {
+  // user not required within this component; removed to avoid unused variable
   const navigate = useNavigate();
   const [projects, setProjects] = useState<Project[]>([]);
   const [projectProgress, setProjectProgress] = useState<Record<string, number>>({});
@@ -83,6 +88,12 @@ const ProjectList: React.FC<ProjectListProps> = ({ onProjectCreated }) => {
       setLoading(false);
     }
   };
+
+  // Expose open/close dialog functions to parent via ref
+  useImperativeHandle(ref, () => ({
+    openDialog: () => setOpen(true),
+    closeDialog: () => setOpen(false)
+  }));
 
   useEffect(() => {
     fetchProjects();
@@ -256,10 +267,10 @@ const ProjectList: React.FC<ProjectListProps> = ({ onProjectCreated }) => {
         maxWidth="sm" 
         fullWidth
         PaperProps={{
-          sx: { borderRadius: 3 }
+          sx: { borderRadius: 3, bgcolor: 'background.paper', color: 'text.primary' }
         }}
       >
-        <form onSubmit={createProject} className="p-6">
+        <form onSubmit={createProject} className="p-6 bg-white dark:bg-slate-800 text-gray-900 dark:text-white">
           <h2 className="text-2xl font-semibold mb-2">
             Create New Project
           </h2>
@@ -276,7 +287,7 @@ const ProjectList: React.FC<ProjectListProps> = ({ onProjectCreated }) => {
               value={formData.name}
               onChange={(e) => setFormData({ ...formData, name: e.target.value })}
               required
-              className="input-field"
+              className="input-field bg-white dark:bg-slate-700 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-400"
             />
           </div>
           
@@ -289,7 +300,7 @@ const ProjectList: React.FC<ProjectListProps> = ({ onProjectCreated }) => {
               onChange={(e) => setFormData({ ...formData, description: e.target.value })}
               rows={3}
               placeholder="Describe your project goals, objectives, and team..."
-              className="input-field resize-none"
+              className="input-field resize-none bg-white dark:bg-slate-700 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-400"
             />
           </div>
           
@@ -312,6 +323,6 @@ const ProjectList: React.FC<ProjectListProps> = ({ onProjectCreated }) => {
       </Dialog>
     </div>
   );
-};
+});
 
 export default ProjectList;

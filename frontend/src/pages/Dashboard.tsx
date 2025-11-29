@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { 
   FiHome, 
   FiFolder, 
@@ -214,6 +214,8 @@ const Dashboard: React.FC<DashboardProps> = ({ toggleDarkMode, darkMode }) => {
     </div>
   );
 
+  const projectListRef = useRef<any>(null);
+
   const renderMainContent = () => {
     switch (activeSection) {
       case 'dashboard':
@@ -251,17 +253,41 @@ const Dashboard: React.FC<DashboardProps> = ({ toggleDarkMode, darkMode }) => {
               />
             </div>
 
-            {/* Projects Section */}
+            {/* Quick Actions */}
             <div className="card p-6">
               <div className="flex justify-between items-center mb-6">
-                <h2 className="text-2xl font-semibold">
-                  Your Projects
-                </h2>
-                <button className="btn-primary flex items-center gap-2">
-                  <FiPlus /> New Project
-                </button>
+                <h2 className="text-2xl font-semibold">Quick Actions</h2>
+                <div className="flex gap-2">
+                  <button
+                    className="btn-primary flex items-center gap-2"
+                    onClick={() => window.location.href = '/projects'}
+                  >
+                    <FiPlus /> Projects
+                  </button>
+                  <button
+                    className="btn-outline flex items-center gap-2"
+                    onClick={() => window.location.href = '/teams'}
+                  >
+                    <FiUsers /> Team
+                  </button>
+                </div>
               </div>
-              <ProjectList onProjectCreated={fetchDashboardData} />
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="p-4 bg-white dark:bg-slate-800 rounded-lg">
+                  <h3 className="font-semibold">Create a Project</h3>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">Start a project for your team.</p>
+                  <div className="mt-3">
+                    <button className="btn-primary" onClick={() => window.location.href = '/projects'}>Create Project</button>
+                  </div>
+                </div>
+                <div className="p-4 bg-white dark:bg-slate-800 rounded-lg">
+                  <h3 className="font-semibold">Invite a Member</h3>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">Invite teammates and collaborate faster.</p>
+                  <div className="mt-3">
+                    <button className="btn-outline" onClick={() => window.location.href = '/teams'}>Invite Member</button>
+                  </div>
+                </div>
+              </div>
             </div>
           </>
         );
@@ -269,15 +295,15 @@ const Dashboard: React.FC<DashboardProps> = ({ toggleDarkMode, darkMode }) => {
       case 'projects':
         return (
           <div className="card p-6 min-h-[600px]">
-            <div className="flex justify-between items-center mb-6">
-              <h1 className="text-3xl font-semibold">
-                All Projects
-              </h1>
-              <button className="btn-primary flex items-center gap-2">
-                <FiPlus /> New Project
-              </button>
-            </div>
-            <ProjectList onProjectCreated={fetchDashboardData} />
+              <div className="flex justify-between items-center mb-6">
+                <h1 className="text-3xl font-semibold">
+                  All Projects
+                </h1>
+                <button className="btn-primary flex items-center gap-2" onClick={() => window.location.href = '/projects'}>
+                  <FiPlus /> New Project
+                </button>
+              </div>
+              <ProjectList ref={projectListRef} onProjectCreated={fetchDashboardData} />
           </div>
         );
 
