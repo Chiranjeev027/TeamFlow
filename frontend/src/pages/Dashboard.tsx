@@ -1,42 +1,23 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { 
-  FiHome, 
-  FiFolder, 
-  FiUsers, 
-  FiCalendar, 
-  FiBarChart2, 
-  FiSettings, 
-  FiLogOut, 
-  FiPlus, 
-  FiCheckCircle,
-  FiSun,
-  FiMoon
-} from 'react-icons/fi';
 import { useAuth } from '../context/AuthContext';
+import {
+  FiFolder,
+  FiUsers,
+  FiBarChart2,
+  FiCalendar,
+  FiCheckCircle,
+  FiPlus
+} from 'react-icons/fi';
 import ProjectList from '../components/ProjectList';
 import TeamManagementSidebar from '../components/TeamManagementSidebar';
 import AnalyticsDashboard from '../components/AnalyticsDashboard';
 import UserSettings from '../components/UserSettings';
+import Sidebar from '../components/Sidebar';
+import TopBar from '../components/TopBar';
 
 interface DashboardProps {
   toggleDarkMode: () => void;
   darkMode: boolean;
-}
-
-interface Project {
-  _id: string;
-  name: string;
-  description: string;
-  owner: { _id: string; name: string; email: string };
-  members: Array<{ _id: string; name: string; email: string }>;
-  createdAt: string;
-}
-
-interface TeamMember {
-  _id: string;
-  name: string;
-  email: string;
-  isOnline?: boolean;
 }
 
 interface DashboardStats {
@@ -47,9 +28,17 @@ interface DashboardStats {
   completionRate: number;
 }
 
+interface TeamMember {
+  _id: string;
+  name: string;
+  email: string;
+  avatar?: string;
+  role?: string;
+  isOnline?: boolean;
+}
+
 const Dashboard: React.FC<DashboardProps> = ({ toggleDarkMode, darkMode }) => {
-  const { user, logout } = useAuth();
-  // Not currently using navigate/location in this page
+  const { user } = useAuth();
   const [activeSection, setActiveSection] = useState('dashboard');
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState<DashboardStats>({
@@ -63,16 +52,6 @@ const Dashboard: React.FC<DashboardProps> = ({ toggleDarkMode, darkMode }) => {
   interface OnlineUser { userId: string; name: string; email?: string; projectId?: string }
   const [onlineUsers, setOnlineUsers] = useState<OnlineUser[]>([]);
 
-  // Menu items with navigation
-  const menuItems = [
-    { id: 'dashboard', text: 'Dashboard', icon: <FiHome className="w-5 h-5" /> },
-    { id: 'projects', text: 'Projects', icon: <FiFolder className="w-5 h-5" /> },
-    { id: 'team', text: 'Team', icon: <FiUsers className="w-5 h-5" /> },
-    { id: 'calendar', text: 'Calendar', icon: <FiCalendar className="w-5 h-5" /> },
-    { id: 'analytics', text: 'Analytics', icon: <FiBarChart2 className="w-5 h-5" /> },
-    { id: 'settings', text: 'Settings', icon: <FiSettings className="w-5 h-5" /> },
-  ];
-
   const fetchDashboardData = async () => {
     try {
       const token = localStorage.getItem('token');
@@ -84,72 +63,36 @@ const Dashboard: React.FC<DashboardProps> = ({ toggleDarkMode, darkMode }) => {
       
       if (!projectsResponse.ok) throw new Error('Failed to fetch projects');
       const projectsData = await projectsResponse.json();
-      // no long storing projects in state here; only calculate derived stats
 
-      // Calculate unique team members across all projects
-      const allTeamMembers = new Map();
-      
-      projectsData.forEach((project: Project) => {
-        // Add owner
-        if (!allTeamMembers.has(project.owner._id)) {
-          allTeamMembers.set(project.owner._id, {
-            _id: project.owner._id,
-            name: project.owner.name,
-            email: project.owner.email
-          });
-        }
-        
-        // Add members
-        project.members.forEach((member: any) => {
-          if (!allTeamMembers.has(member._id)) {
-            allTeamMembers.set(member._id, {
-              _id: member._id,
-              name: member.name,
-              email: member.email
-            });
-          }
-        });
+      // Fetch tasks
+      const tasksResponse = await fetch('/api/tasks', {
+        headers: { 'Authorization': `Bearer ${token}` }
       });
+      
+      if (!tasksResponse.ok) throw new Error('Failed to fetch tasks');
+      const tasksData = await tasksResponse.json();
 
-      const uniqueTeamMembers = Array.from(allTeamMembers.values());
+      // Calculate stats
+      const activeProjects = projectsData.filter((p: any) => p.status !== 'completed').length;
+      const completedTasks = tasksData.filter((t: any) => t.status === 'done').length;
+      const totalTasks = tasksData.length;
+      const completionRate = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
 
-      // Fetch analytics for completion rate
-      const projectIds = projectsData.map((p: Project) => p._id);
-      let totalCompletedTasks = 0;
-      let totalTasks = 0;
+      // Extract unique team members from all projects
+      const allTeamMembers = projectsData.reduce((acc: TeamMember[], project: any) => {
+        return [...acc, ...project.team];
+      }, []);
 
-      if (projectIds.length > 0) {
-        const analyticsResponse = await fetch('/api/projects/analytics/batch', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`
-          },
-          body: JSON.stringify({ projectIds })
-        });
-
-        if (analyticsResponse.ok) {
-          const analyticsData = await analyticsResponse.json();
-          
-          totalCompletedTasks = Object.values(analyticsData).reduce((sum: number, projectAnalytics: any) => 
-            sum + (projectAnalytics.completedTasks || 0), 0
-          );
-          
-          totalTasks = Object.values(analyticsData).reduce((sum: number, projectAnalytics: any) => 
-            sum + (projectAnalytics.totalTasks || 0), 0
-          );
-        }
-      }
-
-      const overallCompletionRate = totalTasks > 0 ? 
-        Math.round((totalCompletedTasks / totalTasks) * 100) : 0;
+      const uniqueTeamMembers = Array.from(
+        new Map(allTeamMembers.map((member: TeamMember) => [member._id, member])).values()
+      ) as TeamMember[];
 
       setStats({
         totalProjects: projectsData.length,
         totalTeamMembers: uniqueTeamMembers.length,
-        activeProjects: projectsData.length,
-        completedTasks: totalCompletedTasks,
-        completionRate: overallCompletionRate
+        activeProjects,
+        completedTasks,
+        completionRate
       });
 
       setTeamMembers(uniqueTeamMembers);
@@ -342,8 +285,15 @@ const Dashboard: React.FC<DashboardProps> = ({ toggleDarkMode, darkMode }) => {
   };
 
   const getSectionTitle = () => {
-    const section = menuItems.find(item => item.id === activeSection);
-    return section ? section.text : 'Dashboard';
+    const titles: Record<string, string> = {
+      dashboard: 'Dashboard',
+      projects: 'Projects',
+      team: 'Team',
+      calendar: 'Calendar',
+      analytics: 'Analytics',
+      settings: 'Settings'
+    };
+    return titles[activeSection] || 'Dashboard';
   };
 
   if (loading) {
@@ -358,110 +308,22 @@ const Dashboard: React.FC<DashboardProps> = ({ toggleDarkMode, darkMode }) => {
 
   return (
     <div className="flex min-h-screen bg-slate-50 dark:bg-slate-900 overflow-hidden">
-      {/* Sidebar */}
-      <div 
-        className="w-[280px] flex-shrink-0 bg-gradient-to-b from-indigo-600 to-purple-700 text-white flex flex-col"
-        style={{ height: '100vh', position: 'fixed' }}
-      >
-        <div className="p-6">
-          <h1 className="text-2xl font-bold mb-1">
-            TeamFlow
-          </h1>
-          <p className="text-sm opacity-80">
-            Project Management
-          </p>
-        </div>
-
-        <nav className="px-4 mt-4 flex-1 overflow-y-auto">
-          {menuItems.map((item) => (
-            <button
-              key={item.id}
-              onClick={() => setActiveSection(item.id)}
-              className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg mb-2 transition-all ${
-                activeSection === item.id
-                  ? 'bg-white/20 border-2 border-white/80'
-                  : 'border-2 border-transparent hover:bg-white/10'
-              }`}
-            >
-              <span className="text-white">{item.icon}</span>
-              <span className={`text-white ${activeSection === item.id ? 'font-semibold' : 'font-normal'}`}>
-                {item.text}
-              </span>
-            </button>
-          ))}
-        </nav>
-
-        {/* Sidebar Team Status */}
-        <div className="mt-auto p-4">
-          <div className="border-t border-white/20 pt-4 mb-4">
-            {/* Team Online Status */}
-            <div className="mb-4">
-              <p className="text-sm text-white/80 mb-2">
-                Team Online
-              </p>
-              <div className="flex items-center gap-2">
-                <div className="flex -space-x-2">
-                  {teamMembers.slice(0, 3).map((member) => (
-                    <div 
-                      key={member._id}
-                      className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-semibold text-white border-2 border-white ${
-                        onlineUsers.some(u => u.userId === member._id) ? 'bg-green-500' : 'bg-gray-500'
-                      }`}
-                    >
-                      {member.name.charAt(0).toUpperCase()}
-                    </div>
-                  ))}
-                </div>
-                <span className="text-xs text-white/70">
-                  {onlineUsers.length}/{teamMembers.length} online
-                </span>
-              </div>
-            </div>
-
-            {/* User Info and Logout */}
-            <div className="flex items-center mb-3">
-              <div className="w-10 h-10 rounded-full bg-green-500 flex items-center justify-center text-white font-semibold mr-3">
-                {user?.name?.charAt(0).toUpperCase()}
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-semibold text-white truncate">
-                  {user?.name}
-                </p>
-                <p className="text-xs text-white/80 truncate">
-                  {user?.email}
-                </p>
-              </div>
-            </div>
-            <button
-              onClick={logout}
-              className="w-full flex items-center gap-2 px-4 py-2 text-white hover:bg-white/10 rounded-lg transition-colors"
-            >
-              <FiLogOut /> Logout
-            </button>
-          </div>
-        </div>
-      </div>
+      {/* Sidebar Component */}
+      <Sidebar 
+        activeSection={activeSection}
+        onSectionChange={setActiveSection}
+        teamMembers={teamMembers}
+        onlineUsers={onlineUsers}
+      />
 
       {/* Main Content */}
       <div className="flex-1 ml-[280px] w-[calc(100%-280px)] overflow-auto">
-        <header className="bg-white dark:bg-slate-800 border-b border-gray-200 dark:border-gray-700 sticky top-0 z-10">
-          <div className="px-6 py-4 flex items-center justify-between">
-            <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
-              {getSectionTitle()}
-            </h2>
-            <div className="flex items-center gap-4">
-              <button 
-                onClick={toggleDarkMode}
-                className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-              >
-                {darkMode ? <FiSun className="w-5 h-5" /> : <FiMoon className="w-5 h-5" />}
-              </button>
-              <p className="text-sm text-gray-600 dark:text-gray-400">
-                Welcome back, {user?.name}!
-              </p>
-            </div>
-          </div>
-        </header>
+        {/* TopBar Component */}
+        <TopBar 
+          title={getSectionTitle()}
+          toggleDarkMode={toggleDarkMode}
+          darkMode={darkMode}
+        />
         
         <div className="mt-8 pb-8 px-6 w-full max-w-full">
           {renderMainContent()}
