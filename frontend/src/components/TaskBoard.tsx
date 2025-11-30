@@ -4,8 +4,8 @@ import {
   Dialog,
   Alert
 } from '@mui/material';
-import { FiPlus, FiUsers, FiSearch } from 'react-icons/fi';
-import { useParams } from 'react-router-dom';
+import { FiPlus, FiUsers, FiSearch, FiArrowLeft } from 'react-icons/fi';
+import { useParams, useNavigate } from 'react-router-dom';
 import { useSocket } from '../context/SocketContext';
 import { useAuth } from '../context/AuthContext';
 
@@ -17,6 +17,7 @@ import type { Task, Project, TaskFormData } from '../types';
 
 const TaskBoard: React.FC = () => {
   const { projectId } = useParams<{ projectId: string }>();
+  const navigate = useNavigate();
   const socket = useSocket();
   const { user } = useAuth();
 
@@ -280,9 +281,18 @@ const TaskBoard: React.FC = () => {
     <div className="w-full">
       {/* Header */}
       <div className="flex justify-between items-center mb-6">
-        <div>
-          <h1 className="text-3xl font-bold">{project.name}</h1>
-          <p className="text-gray-600 dark:text-gray-400">{project.description}</p>
+        <div className="flex items-start gap-3">
+          <button
+            onClick={() => navigate('/?section=projects')}
+            className="p-2 mt-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+            title="Back to Projects"
+          >
+            <FiArrowLeft className="w-5 h-5" />
+          </button>
+          <div>
+            <h1 className="text-3xl font-bold">{project.name}</h1>
+            <p className="text-gray-600 dark:text-gray-400">{project.description}</p>
+          </div>
         </div>
         <div className="flex gap-3 items-center">
           <button

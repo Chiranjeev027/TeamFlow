@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import {
   FiFolder,
   FiUsers,
@@ -42,6 +43,7 @@ interface TeamMember {
 
 const Dashboard: React.FC<DashboardProps> = ({ toggleDarkMode, darkMode }) => {
   // const { user } = useAuth();
+  const [searchParams] = useSearchParams();
   const [activeSection, setActiveSection] = useState('dashboard');
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState<DashboardStats>({
@@ -173,6 +175,14 @@ const Dashboard: React.FC<DashboardProps> = ({ toggleDarkMode, darkMode }) => {
     const interval = setInterval(fetchOnlineUsers, 30000);
     return () => clearInterval(interval);
   }, []);
+
+  // Check for section parameter in URL
+  useEffect(() => {
+    const section = searchParams.get('section');
+    if (section && ['dashboard', 'projects', 'team', 'calendar', 'analytics', 'settings'].includes(section)) {
+      setActiveSection(section);
+    }
+  }, [searchParams]);
 
   const StatCard = ({ title, value, icon, color, subtitle }: any) => (
     <div
