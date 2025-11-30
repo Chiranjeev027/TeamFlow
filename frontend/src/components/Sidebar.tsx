@@ -53,17 +53,24 @@ const Sidebar: React.FC<SidebarProps> = ({
   };
 
   const menuItems = [
-    { id: 'dashboard', text: 'Dashboard', icon: <FiHome className="w-5 h-5" />, path: '/' },
-    { id: 'projects', text: 'Projects', icon: <FiFolder className="w-5 h-5" />, path: '/' },
+    { id: 'dashboard', text: 'Dashboard', icon: <FiHome className="w-5 h-5" />, path: '/?section=dashboard' },
+    { id: 'projects', text: 'Projects', icon: <FiFolder className="w-5 h-5" />, path: '/?section=projects' },
     { id: 'team', text: 'Team', icon: <FiUsers className="w-5 h-5" />, path: '/teams' },
     { id: 'calendar', text: 'Calendar', icon: <FiCalendar className="w-5 h-5" />, path: '/calendar' },
-    { id: 'analytics', text: 'Analytics', icon: <FiBarChart2 className="w-5 h-5" />, path: '/' },
-    { id: 'settings', text: 'Settings', icon: <FiSettings className="w-5 h-5" />, path: '/' },
+    { id: 'analytics', text: 'Analytics', icon: <FiBarChart2 className="w-5 h-5" />, path: '/?section=analytics' },
+    { id: 'settings', text: 'Settings', icon: <FiSettings className="w-5 h-5" />, path: '/?section=settings' },
   ];
 
   const handleMenuClick = (item: typeof menuItems[0]) => {
-    // Handle external pages (Teams, Calendar)
-    if (item.path === '/teams' || item.path === '/calendar') {
+    // Check if item has a specific path and navigate to it, or use onSectionChange if available
+    if (item.id === 'calendar' || item.id === 'team') {
+      // Navigate to dedicated pages
+      navigate(item.path);
+    } else if (onSectionChange) {
+      // If onSectionChange is provided (we're on Dashboard), use it for internal sections
+      onSectionChange(item.id);
+    } else {
+      // If no onSectionChange (we're on Calendar/Teams), navigate to Dashboard with section param
       navigate(item.path);
     }
     // Handle Dashboard sections (Dashboard, Projects, Analytics, Settings)

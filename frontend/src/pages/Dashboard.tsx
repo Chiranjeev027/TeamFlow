@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import {
   FiFolder,
   FiUsers,
@@ -43,17 +44,9 @@ interface TeamMember {
 }
 
 const Dashboard: React.FC<DashboardProps> = ({ toggleDarkMode, darkMode }) => {
-  const location = useLocation();
-  // Initialize activeSection from location state if available, otherwise default to 'dashboard'
-  const [activeSection, setActiveSection] = useState(location.state?.section || 'dashboard');
-
-  // Update activeSection when location state changes
-  useEffect(() => {
-    if (location.state?.section) {
-      setActiveSection(location.state.section);
-    }
-  }, [location.state]);
-
+  // const { user } = useAuth();
+  const [searchParams] = useSearchParams();
+  const [activeSection, setActiveSection] = useState('dashboard');
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState<DashboardStats>({
     totalProjects: 0,
@@ -163,6 +156,14 @@ const Dashboard: React.FC<DashboardProps> = ({ toggleDarkMode, darkMode }) => {
   useEffect(() => {
     fetchDashboardData();
   }, []);
+
+  // Check for section parameter in URL
+  useEffect(() => {
+    const section = searchParams.get('section');
+    if (section && ['dashboard', 'projects', 'team', 'calendar', 'analytics', 'settings'].includes(section)) {
+      setActiveSection(section);
+    }
+  }, [searchParams]);
 
   const StatCard = ({ title, value, icon, color, subtitle }: any) => (
     <div
