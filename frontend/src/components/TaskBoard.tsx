@@ -18,7 +18,7 @@ import type { Task, Project, TaskFormData } from '../types';
 const TaskBoard: React.FC = () => {
   const { projectId } = useParams<{ projectId: string }>();
   const navigate = useNavigate();
-  const socket = useSocket();
+  const { socket, updateStatus } = useSocket();
   const { user } = useAuth();
 
   const [project, setProject] = useState<Project | null>(null);

@@ -7,7 +7,7 @@ import {
   FiCalendar,
   FiCheckCircle
 } from 'react-icons/fi';
-import { useLocation } from 'react-router-dom';
+
 import ProjectList from '../components/ProjectList';
 import TeamManagementSidebar from '../components/TeamManagementSidebar';
 import AnalyticsDashboard from '../components/AnalyticsDashboard';
