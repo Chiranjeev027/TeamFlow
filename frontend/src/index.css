@@ -1,0 +1,195 @@
+/* Calendar Styles */
+@import './styles/calendar.css';
+@import './styles/mui-dark-mode.css';
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    font-synthesis: none;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  body {
+    @apply m-0 min-w-[320px] min-h-screen w-full;
+  }
+  
+  /* Hide scrollbar for Chrome, Safari and Opera */
+  *::-webkit-scrollbar {
+    display: none;
+  }
+  
+  /* Hide scrollbar for IE, Edge and Firefox */
+  * {
+    -ms-overflow-style: none;  /* IE and Edge */
+    scrollbar-width: none;  /* Firefox */
+  }
+}
+
+@layer components {
+  .btn-primary {
+    @apply px-4 py-2 bg-primary-500 text-white rounded-lg font-semibold hover:bg-primary-600 transition-all duration-200 hover:shadow-lg transform hover:scale-[1.02];
+  }
+
+  .btn-secondary {
+    @apply px-4 py-2 bg-secondary-500 text-white rounded-lg font-semibold hover:bg-secondary-600 transition-all duration-200;
+  }
+
+  .btn-outline {
+    @apply px-4 py-2 border-2 border-primary-500 text-primary-500 rounded-lg font-semibold hover:bg-primary-50 dark:hover:bg-primary-900/20 transition-all duration-200;
+  }
+
+  .card {
+    @apply rounded-xl bg-white dark:bg-slate-800 shadow-light dark:shadow-dark p-4 transition-all duration-300;
+  }
+
+  .card-glass {
+    @apply rounded-xl backdrop-blur-xl bg-white/80 dark:bg-slate-800/80 shadow-lg border border-white/20 dark:border-slate-700/50 p-6;
+  }
+
+  .input-field {
+    @apply w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-slate-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500 transition-all duration-200;
+  }
+
+  /* Avatar Upload Styles */
+  .avatar-upload-container {
+    @apply relative cursor-pointer;
+  }
+
+  .avatar-upload-overlay {
+    @apply absolute inset-0 bg-black/50 rounded-full flex items-center justify-center opacity-0 transition-opacity duration-200;
+  }
+
+  /* Password Strength Indicator */
+  .strength-weak {
+    @apply bg-red-500;
+  }
+
+  .strength-fair {
+    @apply bg-orange-500;
+  }
+
+  .strength-good {
+    @apply bg-yellow-500;
+  }
+
+  .strength-strong {
+    @apply bg-green-500;
+  }
+
+  .strength-bar {
+    @apply h-1 rounded-full transition-all duration-300;
+  }
+
+  /* Glassmorphism Card */
+  .glass-card {
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.05));
+    backdrop-filter: blur(10px);
+    @apply rounded-2xl border border-white/20 dark:border-slate-700/50 shadow-xl;
+  }
+
+  /* Gradient Accents */
+  .gradient-accent {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  }
+
+  .gradient-text {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  /* Session Card */
+  .session-card {
+    @apply p-4 rounded-lg border border-gray-200 dark:border-gray-700 hover:border-primary-400 dark:hover:border-primary-600 transition-all duration-200 hover:shadow-md;
+  }
+
+  /* Animated Toggle */
+  .toggle-switch {
+    @apply relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-200 ease-in-out;
+  }
+
+  .toggle-switch-active {
+    @apply bg-gradient-to-r from-primary-500 to-primary-600;
+  }
+
+  .toggle-switch-inactive {
+    @apply bg-gray-300 dark:bg-gray-600;
+  }
+
+  /* Profile Completion Bar */
+  .progress-bar {
+    @apply h-2 rounded-full bg-gradient-to-r from-primary-500 to-purple-600 transition-all duration-500;
+  }
+
+  /* Theme Card Enhanced */
+  .theme-card {
+    @apply p-6 rounded-xl border-2 transition-all duration-300 hover:scale-105 hover:shadow-lg cursor-pointer;
+  }
+
+  .theme-card-active {
+    @apply border-primary-500 bg-gradient-to-br from-primary-50 to-purple-50 dark:from-primary-900/20 dark:to-purple-900/20;
+  }
+
+  .theme-card-inactive {
+    @apply border-gray-300 dark:border-gray-600 hover:border-primary-300 dark:hover:border-primary-700;
+  }
+}
+
+/* Animations */
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes pulse-subtle {
+
+  0%,
+  100% {
+    opacity: 1;
+  }
+
+  50% {
+    opacity: 0.8;
+  }
+}
+
+.animate-slide-in {
+  animation: slideIn 0.3s ease-out;
+}
+
+.animate-pulse-subtle {
+  animation: pulse-subtle 2s ease-in-out infinite;
+}
+
+button:focus,
+button:focus-visible {
+  outline: 4px auto -webkit-focus-ring-color;
+}
+
+@media (prefers-color-scheme: light) {
+  :root {
+    color: #213547;
+    background-color: #ffffff;
+  }
+
+  a:hover {
+    color: #747bff;
+  }
+
+  button {
+    background-color: #f9f9f9;
+  }
+}
