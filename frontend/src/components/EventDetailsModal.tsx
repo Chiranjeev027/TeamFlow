@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import axios from 'axios';
+import axios from '../config/axios';
 import { FiX, FiTrash2, FiCalendar, FiClock, FiUsers, FiLink, FiBell } from 'react-icons/fi';
 import { useNavigate } from 'react-router-dom';
 

@@ -6,7 +6,7 @@ import { format, parse, startOfWeek, getDay, addDays, startOfMonth, endOfMonth }
 import { enUS } from 'date-fns/locale';
 import 'react-big-calendar/lib/css/react-big-calendar.css';
 import 'react-big-calendar/lib/addons/dragAndDrop/styles.css';
-import axios from 'axios';
+import axios from '../config/axios';
 import { FiCalendar, FiPlus, FiFilter } from 'react-icons/fi';
 import CreateEventModal from '../components/CreateEventModal';
 import EventDetailsModal from '../components/EventDetailsModal';
