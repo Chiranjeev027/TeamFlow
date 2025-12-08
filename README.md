@@ -5,6 +5,10 @@ A modern, real-time collaborative project management platform built with the MER
 ![TeamFlow](https://img.shields.io/badge/version-1.0.0-blue.svg)
 ![License](https://img.shields.io/badge/license-ISC-green.svg)
 
+## 🌐 Live Demo
+
+**[Visit TeamFlow →](https://team-flow-sigma.vercel.app)**
+
 ## 🌟 Features
 
 ### Core Functionality

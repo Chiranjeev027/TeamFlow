@@ -2,6 +2,7 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { io, Socket } from 'socket.io-client';
 import { useAuth } from './AuthContext';
+import { SOCKET_URL } from '../config/api';
 
 interface OnlineUser {
   userId: string;
@@ -37,11 +38,12 @@ export const SocketProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
   // Initialize socket connection once
   useEffect(() => {
-    const newSocket = io('http://localhost:5000', {
+    const newSocket = io(SOCKET_URL, {
       transports: ['websocket', 'polling'],
       reconnection: true,
       reconnectionAttempts: 5,
       reconnectionDelay: 1000,
+      withCredentials: true
     });
 
     setSocket(newSocket);
