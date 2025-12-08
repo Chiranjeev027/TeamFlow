@@ -19,6 +19,7 @@ import RecentActivityFeed from '../components/RecentActivityFeed';
 import UpcomingDeadlines from '../components/UpcomingDeadlines';
 import TeamAvailability from '../components/TeamAvailability';
 import ProjectProgressList from '../components/ProjectProgressList';
+import { apiFetch } from '../config/apiFetch';
 
 interface DashboardProps {
   toggleDarkMode: () => void;
@@ -63,7 +64,7 @@ const Dashboard: React.FC<DashboardProps> = ({ toggleDarkMode, darkMode }) => {
       const token = localStorage.getItem('token');
 
       // Fetch projects
-      const projectsResponse = await fetch('/api/projects', {
+      const projectsResponse = await apiFetch('/api/projects', {
         headers: { 'Authorization': `Bearer ${token}` }
       });
 
@@ -77,7 +78,7 @@ const Dashboard: React.FC<DashboardProps> = ({ toggleDarkMode, darkMode }) => {
       // Fetch tasks (make this optional to not block project stats)
       let tasksData: any[] = [];
       try {
-        const tasksResponse = await fetch('/api/tasks', {
+        const tasksResponse = await apiFetch('/api/tasks', {
           headers: { 'Authorization': `Bearer ${token}` }
         });
 

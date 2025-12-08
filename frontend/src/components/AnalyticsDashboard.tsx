@@ -25,6 +25,7 @@ import {
   Area,
   AreaChart
 } from 'recharts';
+import { apiFetch } from '../config/apiFetch';
 
 interface AnalyticsData {
   completionRate: number;
@@ -111,8 +112,8 @@ const AnalyticsDashboard: React.FC = () => {
 
       // Fetch projects and tasks
       const [projectsRes, tasksRes] = await Promise.all([
-        fetch('/api/projects', { headers: { 'Authorization': `Bearer ${token}` } }),
-        fetch('/api/tasks', { headers: { 'Authorization': `Bearer ${token}` } })
+        apiFetch('/api/projects', { headers: { 'Authorization': `Bearer ${token}` } }),
+        apiFetch('/api/tasks', { headers: { 'Authorization': `Bearer ${token}` } })
       ]);
 
       if (!projectsRes.ok || !tasksRes.ok) {
