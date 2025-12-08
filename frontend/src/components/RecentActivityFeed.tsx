@@ -1,4 +1,5 @@
 import React from 'react';
+import { apiFetch } from '../config/apiFetch';
 import {
     FiClock,
     FiCheckCircle,
@@ -40,8 +41,8 @@ const RecentActivityFeed: React.FC = () => {
         try {
             const token = localStorage.getItem('token');
             if (!user?.id) return;
-            
-            const response = await fetch(`/api/activities/${user.id}`, {
+
+            const response = await apiFetch(`/api/activities/${user.id}`, {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
 
