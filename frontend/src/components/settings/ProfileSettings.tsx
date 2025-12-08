@@ -62,7 +62,7 @@ const ProfileSettings: React.FC<ProfileSettingsProps> = ({ loading, setLoading, 
                 formData.append('avatar', avatarFile);
 
                 try {
-                    await apiapiFetch('/api/users/avatar', {
+                    await apiFetch('/api/users/avatar', {
                         method: 'POST',
                         headers: {
                             'Authorization': `Bearer ${token}`
@@ -74,7 +74,7 @@ const ProfileSettings: React.FC<ProfileSettingsProps> = ({ loading, setLoading, 
                 }
             }
 
-            const response = await apiapiFetch('/api/users/profile', {
+            const response = await apiFetch('/api/users/profile', {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',

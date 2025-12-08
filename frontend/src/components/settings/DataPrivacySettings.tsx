@@ -18,7 +18,7 @@ const DataPrivacySettings: React.FC<DataPrivacySettingsProps> = ({ loading, setL
 
         try {
             const token = localStorage.getItem('token');
-            const response = await apiapiFetch('/api/users/export', {
+            const response = await apiFetch('/api/users/export', {
                 headers: {
                     'Authorization': `Bearer ${token}`
                 }
@@ -63,7 +63,7 @@ const DataPrivacySettings: React.FC<DataPrivacySettingsProps> = ({ loading, setL
 
         try {
             const token = localStorage.getItem('token');
-            const response = await apiapiFetch('/api/users/account', {
+            const response = await apiFetch('/api/users/account', {
                 method: 'DELETE',
                 headers: {
                     'Content-Type': 'application/json',

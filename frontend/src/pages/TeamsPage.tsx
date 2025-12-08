@@ -47,7 +47,7 @@ const TeamsPage: React.FC<TeamsPageProps> = ({ toggleDarkMode, darkMode }) => {
         const token = localStorage.getItem('token');
 
         // Fetch projects to get team members
-        const projectsResponse = await apiapiFetch('/api/projects', {
+        const projectsResponse = await apiFetch('/api/projects', {
           headers: { 'Authorization': `Bearer ${token}` }
         });
 

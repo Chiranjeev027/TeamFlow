@@ -58,7 +58,7 @@ const ProjectList = forwardRef<ProjectListRef, ProjectListProps>(({ onProjectCre
   const fetchProjects = async () => {
     try {
       const token = localStorage.getItem('token');
-      const response = await apiapiFetch('/api/projects', {
+      const response = await apiFetch('/api/projects', {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -72,7 +72,7 @@ const ProjectList = forwardRef<ProjectListRef, ProjectListProps>(({ onProjectCre
       try {
         const ids = data.map((p: Project) => p._id);
         const token = localStorage.getItem('token');
-        const resp = await apiapiFetch('/api/projects/analytics/batch', {
+        const resp = await apiFetch('/api/projects/analytics/batch', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
           body: JSON.stringify({ projectIds: ids })
@@ -210,7 +210,7 @@ const ProjectList = forwardRef<ProjectListRef, ProjectListProps>(({ onProjectCre
     e.preventDefault();
     try {
       const token = localStorage.getItem('token');
-      const response = await apiapiFetch('/api/projects', {
+      const response = await apiFetch('/api/projects', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

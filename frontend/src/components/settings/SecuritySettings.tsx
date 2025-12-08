@@ -80,7 +80,7 @@ const SecuritySettings: React.FC<SecuritySettingsProps> = ({ loading, setLoading
 
         try {
             const token = localStorage.getItem('token');
-            const response = await apiapiFetch('/api/users/password', {
+            const response = await apiFetch('/api/users/password', {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',

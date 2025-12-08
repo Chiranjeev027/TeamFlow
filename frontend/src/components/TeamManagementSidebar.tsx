@@ -54,7 +54,7 @@ const TeamManagementSidebar: React.FC = () => {
       setError('');
       const token = localStorage.getItem('token');
 
-      const response = await apiapiFetch('/api/projects', {
+      const response = await apiFetch('/api/projects', {
         headers: {
           'Authorization': `Bearer ${token}`
         }
