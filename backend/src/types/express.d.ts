@@ -12,4 +12,8 @@ interface UserData {
 
 export interface AuthRequest extends ExpressRequest {
     user?: Document & UserData;
+    headers: any;
+    params: any;
+    query: any;
+    body: any;
 }
