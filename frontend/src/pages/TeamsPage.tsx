@@ -1,5 +1,6 @@
 // teamflow/frontend/src/pages/TeamsPage.tsx
 import React, { useState, useEffect, useMemo } from 'react';
+import { apiFetch } from '../config/apiFetch';
 import {
   FiUsers,
   FiUserPlus,

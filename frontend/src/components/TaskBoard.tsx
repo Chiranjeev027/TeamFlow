@@ -1,5 +1,6 @@
 // teamflow/frontend/src/components/TaskBoard.tsx
 import React, { useState, useEffect, useRef } from 'react';
+import { apiFetch } from '../config/apiFetch';
 import {
   Dialog,
   Alert
@@ -283,29 +284,28 @@ const TaskBoard: React.FC = () => {
 
   return (
     <>
-    <div className="w-full">
-      {/* Header */}
-      <div className="flex justify-between items-center mb-6">
-        <div className="flex items-start gap-3">
-          <button
-            onClick={() => navigate('/?section=projects')}
-            className="p-2 mt-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
-            title="Back to Projects"
-          >
-            <FiArrowLeft className="w-5 h-5" />
-          </button>
-          <div>
-            <h1 className="text-3xl font-bold">{project.name}</h1>
-            <p className="text-gray-600 dark:text-gray-400">{project.description}</p>
+      <div className="w-full">
+        {/* Header */}
+        <div className="flex justify-between items-center mb-6">
+          <div className="flex items-start gap-3">
+            <button
+              onClick={() => navigate('/?section=projects')}
+              className="p-2 mt-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+              title="Back to Projects"
+            >
+              <FiArrowLeft className="w-5 h-5" />
+            </button>
+            <div>
+              <h1 className="text-3xl font-bold">{project.name}</h1>
+              <p className="text-gray-600 dark:text-gray-400">{project.description}</p>
+            </div>
           </div>
-        </div>
-        <div className="flex gap-3 items-center">
-          <button
-            onClick={() => setTeamDialogOpen(true)}
-            className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-colors relative ${
-              isOwner 
-                ? 'btn-primary' 
-                : 'btn-outline'
+          <div className="flex gap-3 items-center">
+            <button
+              onClick={() => setTeamDialogOpen(true)}
+              className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-colors relative ${isOwner
+                  ? 'btn-primary'
+                  : 'btn-outline'
                 }`}
             >
               <FiUsers />
