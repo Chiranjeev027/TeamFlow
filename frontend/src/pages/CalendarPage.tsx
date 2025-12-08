@@ -1,31 +1,18 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { apiFetch } from '../config/apiFetch';
 import { Calendar, dateFnsLocalizer } from 'react-big-calendar';
-import { apiFetch } from '../config/apiFetch';
 import type { View } from 'react-big-calendar';
-import { apiFetch } from '../config/apiFetch';
 import withDragAndDrop from 'react-big-calendar/lib/addons/dragAndDrop';
-import { apiFetch } from '../config/apiFetch';
 import { format, parse, startOfWeek, getDay, addDays, startOfMonth, endOfMonth } from 'date-fns';
-import { apiFetch } from '../config/apiFetch';
 import { enUS } from 'date-fns/locale';
-import { apiFetch } from '../config/apiFetch';
 import 'react-big-calendar/lib/css/react-big-calendar.css';
-import { apiFetch } from '../config/apiFetch';
 import 'react-big-calendar/lib/addons/dragAndDrop/styles.css';
-import { apiFetch } from '../config/apiFetch';
 import axios from '../config/axios';
-import { apiFetch } from '../config/apiFetch';
 import { FiCalendar, FiPlus, FiFilter } from 'react-icons/fi';
-import { apiFetch } from '../config/apiFetch';
 import CreateEventModal from '../components/CreateEventModal';
-import { apiFetch } from '../config/apiFetch';
 import EventDetailsModal from '../components/EventDetailsModal';
-import { apiFetch } from '../config/apiFetch';
 import Sidebar from '../components/Sidebar';
-import { apiFetch } from '../config/apiFetch';
 import TopBar from '../components/TopBar';
-import { apiFetch } from '../config/apiFetch';
 
 // Setup the localizer for react-big-calendar
 const locales = {

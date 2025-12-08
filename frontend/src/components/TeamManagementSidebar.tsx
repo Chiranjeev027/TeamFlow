@@ -13,9 +13,7 @@ import {
   FiMinusCircle
 } from 'react-icons/fi';
 import InviteMemberDialog from './InviteMemberDialog';
-import { apiFetch } from '../config/apiFetch';
 import { useSocket } from '../context/SocketContext';
-import { apiFetch } from '../config/apiFetch';
 
 interface TeamMember {
   _id: string;

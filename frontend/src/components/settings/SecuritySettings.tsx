@@ -1,9 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { apiFetch } from '../config/apiFetch';
+import { apiFetch } from '../../config/apiFetch';
 import { FiLock, FiEye, FiEyeOff, FiShield, FiMonitor, FiMapPin } from 'react-icons/fi';
-import { apiFetch } from '../config/apiFetch';
 import type { SettingsComponentProps, PasswordData, ShowPasswordsState, PasswordStrength } from './types';
-import { apiFetch } from '../config/apiFetch';
 
 interface SecuritySettingsProps extends SettingsComponentProps { }
 

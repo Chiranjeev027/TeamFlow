@@ -1,9 +1,7 @@
 import React from 'react';
 import { apiFetch } from '../config/apiFetch';
 import { FiFolder, FiTrendingUp } from 'react-icons/fi';
-import { apiFetch } from '../config/apiFetch';
 import { useNavigate } from 'react-router-dom';
-import { apiFetch } from '../config/apiFetch';
 
 interface Project {
     _id: string;

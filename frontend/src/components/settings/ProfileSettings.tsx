@@ -1,11 +1,8 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { apiFetch } from '../config/apiFetch';
+import { apiFetch } from '../../config/apiFetch';
 import { FiUser, FiSave, FiCamera, FiCalendar } from 'react-icons/fi';
-import { apiFetch } from '../config/apiFetch';
 import { useAuth } from '../../context/AuthContext';
-import { apiFetch } from '../config/apiFetch';
 import type { SettingsComponentProps, ProfileData } from './types';
-import { apiFetch } from '../config/apiFetch';
 
 interface ProfileSettingsProps extends SettingsComponentProps { }
 
