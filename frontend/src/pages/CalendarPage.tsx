@@ -76,7 +76,7 @@ const CalendarPage: React.FC<CalendarPageProps> = ({ toggleDarkMode, darkMode })
         const fetchTeamMembers = async () => {
             try {
                 const token = localStorage.getItem('token');
-                const projectsResponse = await fetch('/api/projects', {
+                const projectsResponse = await apiapiFetch('/api/projects', {
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
 

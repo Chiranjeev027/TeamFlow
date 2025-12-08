@@ -26,7 +26,7 @@ const UpcomingDeadlines: React.FC = () => {
     const fetchUpcomingDeadlines = async () => {
         try {
             const token = localStorage.getItem('token');
-            const response = await fetch('/api/tasks', {
+            const response = await apiapiFetch('/api/tasks', {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
 

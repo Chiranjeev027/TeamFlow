@@ -29,7 +29,7 @@ const ProjectProgressList: React.FC<ProjectProgressListProps> = () => {
     const fetchProjects = async () => {
         try {
             const token = localStorage.getItem('token');
-            const response = await fetch('/api/projects', {
+            const response = await apiapiFetch('/api/projects', {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
 
@@ -39,7 +39,7 @@ const ProjectProgressList: React.FC<ProjectProgressListProps> = () => {
                 // Fetch progress for each project
                 const progressData: Record<string, number> = {};
                 try {
-                    const progressRes = await fetch('/api/projects/analytics/batch', {
+                    const progressRes = await apiapiFetch('/api/projects/analytics/batch', {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',

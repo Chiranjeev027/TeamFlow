@@ -137,7 +137,7 @@ const TaskBoard: React.FC = () => {
     e.preventDefault();
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch('/api/tasks', {
+      const response = await apiapiFetch('/api/tasks', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
