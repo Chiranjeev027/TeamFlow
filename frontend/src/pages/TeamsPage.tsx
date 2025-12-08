@@ -1,5 +1,6 @@
 // teamflow/frontend/src/pages/TeamsPage.tsx
 import React, { useState, useEffect, useMemo } from 'react';
+import { apiFetch } from '../config/apiFetch';
 import {
   FiUsers,
   FiUserPlus,
@@ -8,10 +9,15 @@ import {
   FiTool
 } from 'react-icons/fi';
 import TeamMembersList from '../components/TeamMemberList';
+import { apiFetch } from '../config/apiFetch';
 import InviteMemberDialog from '../components/InviteMemberDialog';
+import { apiFetch } from '../config/apiFetch';
 import Sidebar from '../components/Sidebar';
+import { apiFetch } from '../config/apiFetch';
 import TopBar from '../components/TopBar';
+import { apiFetch } from '../config/apiFetch';
 import { useSocket } from '../context/SocketContext';
+import { apiFetch } from '../config/apiFetch';
 
 interface TeamMember {
   _id: string;

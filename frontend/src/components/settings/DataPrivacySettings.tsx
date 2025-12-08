@@ -1,8 +1,13 @@
 import React, { useState } from 'react';
+import { apiFetch } from '../config/apiFetch';
 import { FiDownload, FiTrash2, FiAlertTriangle } from 'react-icons/fi';
+import { apiFetch } from '../config/apiFetch';
 import { useAuth } from '../../context/AuthContext';
+import { apiFetch } from '../config/apiFetch';
 import { useNavigate } from 'react-router-dom';
+import { apiFetch } from '../config/apiFetch';
 import type { SettingsComponentProps } from './types';
+import { apiFetch } from '../config/apiFetch';
 
 interface DataPrivacySettingsProps extends SettingsComponentProps { }
 
