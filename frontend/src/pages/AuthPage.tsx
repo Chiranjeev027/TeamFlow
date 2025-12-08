@@ -1,6 +1,7 @@
 // teamflow/frontend/src/pages/AuthPage.tsx
 import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
+import { apiFetch } from '../config/apiFetch';
 
 const AuthPage: React.FC = () => {
   const [isLogin, setIsLogin] = useState(true);
@@ -21,7 +22,7 @@ const AuthPage: React.FC = () => {
     try {
       if (isLogin) {
         // Call backend login API
-        const response = await fetch('/api/auth/login', {
+        const response = await apiFetch('/api/auth/login', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json'
