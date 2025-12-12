@@ -62,7 +62,12 @@ const Sidebar: React.FC<SidebarProps> = ({
   ];
 
   const handleMenuClick = (item: typeof menuItems[0]) => {
-    // Always navigate with URL update for all menu items
+    // Update the active section immediately for smooth transition
+    if (onSectionChange) {
+      onSectionChange(item.id);
+    }
+
+    // Also navigate with URL update for all menu items
     navigate(item.path);
 
     // Close sidebar on mobile when item is clicked
