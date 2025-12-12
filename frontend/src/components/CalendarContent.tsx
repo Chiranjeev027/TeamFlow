@@ -1,4 +1,4 @@
-// Calendar content component without layout wrapper
+
 import React, { useState, useEffect, useCallback } from 'react';
 import { apiFetch } from '../config/apiFetch';
 import { Calendar, dateFnsLocalizer } from 'react-big-calendar';
