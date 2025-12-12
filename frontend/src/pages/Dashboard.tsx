@@ -11,7 +11,7 @@ import {
 import ProjectList from '../components/ProjectList';
 import TeamManagementSidebar from '../components/TeamManagementSidebar';
 import AnalyticsDashboard from '../components/AnalyticsDashboard';
-import CalendarPage from './CalendarPage';
+import CalendarContent from '../components/CalendarContent';
 import Sidebar from '../components/Sidebar';
 import { useSocket } from '../context/SocketContext';
 import TopBar from '../components/TopBar';
@@ -139,6 +139,20 @@ const Dashboard: React.FC<DashboardProps> = ({ toggleDarkMode, darkMode }) => {
           });
         }
       });
+
+      // IMPORTANT: Always include current user even if they have no projects
+      // This ensures status buttons and online indicator work correctly
+      const currentUser = JSON.parse(localStorage.getItem('user') || '{}');
+      const currentUserId = currentUser._id || currentUser.id;
+      if (currentUserId && !allTeamMembersMap.has(currentUserId)) {
+        allTeamMembersMap.set(currentUserId, {
+          _id: currentUserId,
+          name: currentUser.name || 'You',
+          email: currentUser.email || '',
+          role: 'admin',
+          isOnline: true
+        });
+      }
 
       const uniqueTeamMembers = Array.from(allTeamMembersMap.values());
 
@@ -315,8 +329,8 @@ const Dashboard: React.FC<DashboardProps> = ({ toggleDarkMode, darkMode }) => {
 
       case 'calendar':
         return (
-          <div className="-m-6">{/* Negative margin to remove card padding */}
-            <CalendarPage toggleDarkMode={toggleDarkMode} darkMode={darkMode} />
+          <div className="card p-0 overflow-hidden">{/* Remove padding for full-width calendar */}
+            <CalendarContent />
           </div>
         );
 
