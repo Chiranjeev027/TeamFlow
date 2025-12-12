@@ -109,19 +109,39 @@ export const SocketProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
   // Update user status
   const updateStatus = (status: 'online' | 'busy' | 'offline') => {
-    if (socket && user) {
-      const userId = user._id || user.id;
-      if (!userId) {
-        console.error('❌ Cannot update status: Missing User ID');
-        return;
-      }
-
-      console.log(`🔄 Emitting status-change: ${status}`);
-      socket.emit('status-change', {
-        userId: userId,
-        status
-      });
+    if (!user) {
+      console.error('❌ Cannot update status: User not logged in');
+      return;
     }
+
+    const userId = user._id || user.id;
+    if (!userId) {
+      console.error('❌ Cannot update status: Missing User ID');
+      return;
+    }
+
+    if (!socket) {
+      console.warn('⚠️ Socket not initialized yet, will retry when connected');
+      return;
+    }
+
+    if (!socket.connected) {
+      console.warn('⚠️ Socket not connected yet, will retry when connected');
+      // Wait for connection and then emit
+      const handleConnect = () => {
+        console.log(`🔄 Socket connected, now emitting status-change: ${status}`);
+        socket.emit('status-change', { userId, status });
+        socket.off('connect', handleConnect);
+      };
+      socket.once('connect', handleConnect);
+      return;
+    }
+
+    console.log(`🔄 Emitting status-change: ${status}`);
+    socket.emit('status-change', {
+      userId: userId,
+      status
+    });
   };
 
   // Join a task (for presence tracking)

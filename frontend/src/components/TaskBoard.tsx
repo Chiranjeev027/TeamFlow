@@ -289,7 +289,7 @@ const TaskBoard: React.FC = () => {
         <div className="flex justify-between items-center mb-6">
           <div className="flex items-start gap-3">
             <button
-              onClick={() => navigate('/?section=projects')}
+              onClick={() => navigate('/', { replace: false })}
               className="p-2 mt-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
               title="Back to Projects"
             >
