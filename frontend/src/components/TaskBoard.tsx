@@ -61,7 +61,7 @@ const TaskBoard: React.FC = () => {
   const fetchProjectData = async () => {
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch(`/api/projects/${projectId}`, {
+      const response = await apiFetch(`/api/projects/${projectId}`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
 
@@ -163,7 +163,7 @@ const TaskBoard: React.FC = () => {
 
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch(`/api/tasks/${editingTask._id}`, {
+      const response = await apiFetch(`/api/tasks/${editingTask._id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -184,7 +184,7 @@ const TaskBoard: React.FC = () => {
   const updateTaskStatus = async (taskId: string, newStatus: 'todo' | 'in-progress' | 'done') => {
     try {
       const token = localStorage.getItem('token');
-      await fetch(`/api/tasks/${taskId}`, {
+      await apiFetch(`/api/tasks/${taskId}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -200,7 +200,7 @@ const TaskBoard: React.FC = () => {
   const deleteTask = async (taskId: string) => {
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch(`/api/tasks/${taskId}`, {
+      const response = await apiFetch(`/api/tasks/${taskId}`, {
         method: 'DELETE',
         headers: { 'Authorization': `Bearer ${token}` }
       });
@@ -304,8 +304,8 @@ const TaskBoard: React.FC = () => {
             <button
               onClick={() => setTeamDialogOpen(true)}
               className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-colors relative ${isOwner
-                  ? 'btn-primary'
-                  : 'btn-outline'
+                ? 'btn-primary'
+                : 'btn-outline'
                 }`}
             >
               <FiUsers />

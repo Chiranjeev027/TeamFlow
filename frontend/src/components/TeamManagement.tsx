@@ -26,6 +26,7 @@ import {
 import { PersonAdd, PersonRemove, Close, Wifi, WifiOff, RemoveCircleOutline } from '@mui/icons-material';
 import { useAuth } from '../context/AuthContext';
 import { useSocket } from '../context/SocketContext';
+import { apiFetch } from '../config/apiFetch';
 
 interface TeamMember {
   _id: string;
@@ -59,7 +60,7 @@ const TeamManagement: React.FC<TeamManagementProps> = ({ projectId, open, onClos
   const fetchTeam = async () => {
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch(`/api/projects/${projectId}/members`, {
+      const response = await apiFetch(`/api/projects/${projectId}/members`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -115,7 +116,7 @@ const TeamManagement: React.FC<TeamManagementProps> = ({ projectId, open, onClos
 
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch(`/api/projects/${projectId}/members`, {
+      const response = await apiFetch(`/api/projects/${projectId}/members`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -147,7 +148,7 @@ const TeamManagement: React.FC<TeamManagementProps> = ({ projectId, open, onClos
 
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch(`/api/projects/${projectId}/members/${memberId}`, {
+      const response = await apiFetch(`/api/projects/${projectId}/members/${memberId}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${token}`

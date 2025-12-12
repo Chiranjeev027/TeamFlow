@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { FiDownload } from 'react-icons/fi';
+import { apiFetch } from '../config/apiFetch';
 import TaskBoard from '../components/TaskBoard';
 import ActivityFeed from '../components/ActivityFeed';
 import Sidebar from '../components/Sidebar';
@@ -31,7 +32,7 @@ const ProjectPage: React.FC<ProjectPageProps> = ({ toggleDarkMode, darkMode }) =
     const fetchProjectData = async () => {
       try {
         const token = localStorage.getItem('token');
-        const response = await fetch(`/api/projects/${_projectId}`, {
+        const response = await apiFetch(`/api/projects/${_projectId}`, {
           headers: { Authorization: `Bearer ${token}` }
         });
         if (response.ok) {
@@ -49,8 +50,8 @@ const ProjectPage: React.FC<ProjectPageProps> = ({ toggleDarkMode, darkMode }) =
   const handleExportProject = async () => {
     const token = localStorage.getItem('token');
     const [projectRes, tasksRes] = await Promise.all([
-      fetch(`/api/projects/${_projectId}`, { headers: { Authorization: `Bearer ${token}` } }),
-      fetch(`/api/tasks/project/${_projectId}`, { headers: { Authorization: `Bearer ${token}` } })
+      apiFetch(`/api/projects/${_projectId}`, { headers: { Authorization: `Bearer ${token}` } }),
+      apiFetch(`/api/tasks/project/${_projectId}`, { headers: { Authorization: `Bearer ${token}` } })
     ]);
     const projectData = projectRes.ok ? await projectRes.json() : null;
     const tasksData = tasksRes.ok ? await tasksRes.json() : [];

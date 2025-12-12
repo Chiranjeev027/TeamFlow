@@ -294,7 +294,7 @@ const TeamsPage: React.FC<TeamsPageProps> = ({ toggleDarkMode, darkMode }) => {
             onInvite={async (email, _role, projectId) => {
               try {
                 const token = localStorage.getItem('token');
-                const response = await fetch(`/api/projects/${projectId}/members`, {
+                const response = await apiFetch(`/api/projects/${projectId}/members`, {
                   method: 'POST',
                   headers: {
                     'Content-Type': 'application/json',

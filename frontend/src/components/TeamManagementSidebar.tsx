@@ -315,88 +315,88 @@ const TeamManagementSidebar: React.FC = () => {
       {/* Team Members List */}
       <div className="card">
         <h3 className="text-lg font-semibold mb-4">Team Members</h3>
-        
+
         <div>
           <div className="space-y-2">
-              {membersWithStatus.map((member) => (
-                <div
-                  key={member._id}
-                  className="border border-gray-200 dark:border-gray-700 rounded-lg p-3 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
-                >
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className="relative">
-                        <div
-                          className={`w-10 h-10 rounded-full flex items-center justify-center text-white font-semibold ${member.status === 'offline' ? 'bg-gray-400' : 'bg-indigo-500'
-                            }`}
-                        >
-                          {member.name.charAt(0)}
-                        </div>
-                        <div className={`absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 border-white dark:border-gray-800 ${getStatusColor(member.status || 'offline')}`}></div>
-                      </div>
-                      <div>
-                        <div className="flex items-center gap-2 mb-1">
-                          <span className="font-semibold">{member.name}</span>
-                          <span className={`px-2 py-0.5 rounded-full text-xs font-medium flex items-center gap-1 ${getRoleColor(member.role)}`}>
-                            {getRoleIcon(member.role)}
-                            {member.role.toUpperCase()}
-                          </span>
-                          <div className="flex items-center gap-1">
-                            {getStatusIcon(member.status || 'offline')}
-                            <span className="text-xs text-gray-600 dark:text-gray-400">
-                              {getStatusText(member.status || 'offline')}
-                            </span>
-                          </div>
-                        </div>
-                        <div className="flex gap-4 text-sm text-gray-600 dark:text-gray-400">
-                          <span>{member.email}</span>
-                          <span>{member.projects} projects</span>
-                        </div>
-                      </div>
-                    </div>
+            {membersWithStatus.map((member) => (
+              <div
+                key={member._id}
+                className="border border-gray-200 dark:border-gray-700 rounded-lg p-3 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+              >
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
                     <div className="relative">
-                      <button
-                        onClick={(e) => handleMenuOpen(e, member)}
-                        className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg"
+                      <div
+                        className={`w-10 h-10 rounded-full flex items-center justify-center text-white font-semibold ${member.status === 'offline' ? 'bg-gray-400' : 'bg-indigo-500'
+                          }`}
                       >
-                        <FiMoreVertical className="w-4 h-4" />
-                      </button>
+                        {member.name.charAt(0)}
+                      </div>
+                      <div className={`absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 border-white dark:border-gray-800 ${getStatusColor(member.status || 'offline')}`}></div>
                     </div>
+                    <div>
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className="font-semibold">{member.name}</span>
+                        <span className={`px-2 py-0.5 rounded-full text-xs font-medium flex items-center gap-1 ${getRoleColor(member.role)}`}>
+                          {getRoleIcon(member.role)}
+                          {member.role.toUpperCase()}
+                        </span>
+                        <div className="flex items-center gap-1">
+                          {getStatusIcon(member.status || 'offline')}
+                          <span className="text-xs text-gray-600 dark:text-gray-400">
+                            {getStatusText(member.status || 'offline')}
+                          </span>
+                        </div>
+                      </div>
+                      <div className="flex gap-4 text-sm text-gray-600 dark:text-gray-400">
+                        <span>{member.email}</span>
+                        <span>{member.projects} projects</span>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="relative">
+                    <button
+                      onClick={(e) => handleMenuOpen(e, member)}
+                      className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg"
+                    >
+                      <FiMoreVertical className="w-4 h-4" />
+                    </button>
                   </div>
                 </div>
-              ))}
+              </div>
+            ))}
 
-              {/* Context Menu */}
-              {anchorEl && selectedMember && (
-                <>
-                  <div
-                    className="fixed inset-0 z-10"
+            {/* Context Menu */}
+            {anchorEl && selectedMember && (
+              <>
+                <div
+                  className="fixed inset-0 z-10"
+                  onClick={handleMenuClose}
+                />
+                <div
+                  className="fixed bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg py-1 min-w-[200px] z-20"
+                  style={{
+                    top: `${menuPosition.top}px`,
+                    left: `${menuPosition.left}px`
+                  }}
+                >
+                  <button
                     onClick={handleMenuClose}
-                  />
-                  <div
-                    className="fixed bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg py-1 min-w-[200px] z-20"
-                    style={{
-                      top: `${menuPosition.top}px`,
-                      left: `${menuPosition.left}px`
-                    }}
+                    className="w-full px-4 py-2 text-left hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2"
                   >
-                    <button
-                      onClick={handleMenuClose}
-                      className="w-full px-4 py-2 text-left hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2"
-                    >
-                      <FiEdit2 className="w-4 h-4" />
-                      Edit Role for {selectedMember.name}
-                    </button>
-                    <button
-                      onClick={handleMenuClose}
-                      className="w-full px-4 py-2 text-left hover:bg-gray-100 dark:hover:bg-gray-700 text-red-500 flex items-center gap-2"
-                    >
-                      <FiTrash2 className="w-4 h-4" />
-                      Remove {selectedMember.name} from Team
-                    </button>
-                  </div>
-                </>
-              )}
+                    <FiEdit2 className="w-4 h-4" />
+                    Edit Role for {selectedMember.name}
+                  </button>
+                  <button
+                    onClick={handleMenuClose}
+                    className="w-full px-4 py-2 text-left hover:bg-gray-100 dark:hover:bg-gray-700 text-red-500 flex items-center gap-2"
+                  >
+                    <FiTrash2 className="w-4 h-4" />
+                    Remove {selectedMember.name} from Team
+                  </button>
+                </div>
+              </>
+            )}
           </div>
         </div>
       </div>
@@ -409,7 +409,7 @@ const TeamManagementSidebar: React.FC = () => {
         onInvite={async (email, _role, projectId) => {
           try {
             const token = localStorage.getItem('token');
-            const response = await fetch(`/api/projects/${projectId}/members`, {
+            const response = await apiFetch(`/api/projects/${projectId}/members`, {
               method: 'POST',
               headers: {
                 'Content-Type': 'application/json',
