@@ -57,7 +57,7 @@ const Sidebar: React.FC<SidebarProps> = ({
   const menuItems = [
     { id: 'dashboard', text: 'Dashboard', icon: <FiHome className="w-5 h-5" />, path: '/?section=dashboard' },
     { id: 'projects', text: 'Projects', icon: <FiFolder className="w-5 h-5" />, path: '/?section=projects' },
-    { id: 'team', text: 'Team', icon: <FiUsers className="w-5 h-5" />, path: '/teams' },
+    { id: 'team', text: 'Team', icon: <FiUsers className="w-5 h-5" />, path: '/?section=team' },
     { id: 'calendar', text: 'Calendar', icon: <FiCalendar className="w-5 h-5" />, path: '/?section=calendar' },
     { id: 'analytics', text: 'Analytics', icon: <FiBarChart2 className="w-5 h-5" />, path: '/?section=analytics' },
     { id: 'settings', text: 'Settings', icon: <FiSettings className="w-5 h-5" />, path: '/?section=settings' },
