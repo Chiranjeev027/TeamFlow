@@ -11,7 +11,7 @@ import {
 import ProjectList from '../components/ProjectList';
 import TeamManagementSidebar from '../components/TeamManagementSidebar';
 import AnalyticsDashboard from '../components/AnalyticsDashboard';
-import Settings from './Settings';
+import CalendarPage from './CalendarPage';
 import Sidebar from '../components/Sidebar';
 import { useSocket } from '../context/SocketContext';
 import TopBar from '../components/TopBar';
@@ -19,6 +19,9 @@ import RecentActivityFeed from '../components/RecentActivityFeed';
 import UpcomingDeadlines from '../components/UpcomingDeadlines';
 import TeamAvailability from '../components/TeamAvailability';
 import ProjectProgressList from '../components/ProjectProgressList';
+import ProfileSettings from '../components/settings/ProfileSettings';
+import SecuritySettings from '../components/settings/SecuritySettings';
+import { Alert } from '@mui/material';
 import { apiFetch } from '../config/apiFetch';
 
 interface DashboardProps {
@@ -58,6 +61,12 @@ const Dashboard: React.FC<DashboardProps> = ({ toggleDarkMode, darkMode }) => {
   const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
   const { onlineUsers } = useSocket();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+
+  // Settings state
+  const [settingsTab, setSettingsTab] = useState<'profile' | 'security'>('profile');
+  const [settingsLoading, setSettingsLoading] = useState(false);
+  const [settingsSuccess, setSettingsSuccess] = useState('');
+  const [settingsError, setSettingsError] = useState('');
 
   const fetchDashboardData = async () => {
     try {
@@ -304,22 +313,76 @@ const Dashboard: React.FC<DashboardProps> = ({ toggleDarkMode, darkMode }) => {
       case 'analytics':
         return <AnalyticsDashboard />;
 
-      case 'settings':
-        return <Settings toggleDarkMode={toggleDarkMode} darkMode={darkMode} />;
-
       case 'calendar':
         return (
-          <div className="card p-6 text-center min-h-[400px] flex flex-col justify-center items-center">
-            <FiCalendar className="text-6xl text-primary-500 mb-4" />
-            <h1 className="text-3xl font-bold mb-2">
-              Calendar View
-            </h1>
-            <p className="text-gray-600 dark:text-gray-400 mb-6">
-              Project deadlines, milestones, and team availability will appear here.
-            </p>
-            <button className="btn-outline">
-              Coming Soon
-            </button>
+          <div className="-m-6">{/* Negative margin to remove card padding */}
+            <CalendarPage toggleDarkMode={toggleDarkMode} darkMode={darkMode} />
+          </div>
+        );
+
+      case 'settings':
+        return (
+          <div className="max-w-6xl mx-auto">
+            {settingsSuccess && (
+              <Alert severity="success" onClose={() => setSettingsSuccess('')} className="mb-4">
+                {settingsSuccess}
+              </Alert>
+            )}
+            {settingsError && (
+              <Alert severity="error" onClose={() => setSettingsError('')} className="mb-4">
+                {settingsError}
+              </Alert>
+            )}
+
+            <div className="flex flex-col md:flex-row gap-6">
+              {/* Sidebar Tabs */}
+              <div className="md:w-64 flex-shrink-0">
+                <div className="card p-2">
+                  <button
+                    onClick={() => setSettingsTab('profile')}
+                    className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg mb-1 transition-all ${settingsTab === 'profile'
+                      ? 'bg-gradient-to-r from-primary-500 to-purple-600 text-white shadow-lg'
+                      : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
+                      }`}
+                  >
+                    <FiUsers className="text-lg" />
+                    <span className="font-medium">Profile</span>
+                  </button>
+                  <button
+                    onClick={() => setSettingsTab('security')}
+                    className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all ${settingsTab === 'security'
+                      ? 'bg-gradient-to-r from-primary-500 to-purple-600 text-white shadow-lg'
+                      : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
+                      }`}
+                  >
+                    <FiBarChart2 className="text-lg" />
+                    <span className="font-medium">Security</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* Content Area */}
+              <div className="flex-1">
+                <div className="card">
+                  {settingsTab === 'profile' && (
+                    <ProfileSettings
+                      loading={settingsLoading}
+                      setLoading={setSettingsLoading}
+                      setSuccess={setSettingsSuccess}
+                      setError={setSettingsError}
+                    />
+                  )}
+                  {settingsTab === 'security' && (
+                    <SecuritySettings
+                      loading={settingsLoading}
+                      setLoading={setSettingsLoading}
+                      setSuccess={setSettingsSuccess}
+                      setError={setSettingsError}
+                    />
+                  )}
+                </div>
+              </div>
+            </div>
           </div>
         );
 
