@@ -32,6 +32,7 @@ const Sidebar: React.FC<SidebarProps> = ({
   const { user, logout } = useAuth();
   const { onlineUsers: realTimeOnlineUsers, updateStatus } = useSocket();
   const navigate = useNavigate();
+  const [statusMenuOpen, setStatusMenuOpen] = React.useState(false);
 
   // Use real-time online users if available, otherwise fall back to props
   const currentOnlineUsers = realTimeOnlineUsers.length > 0 ? realTimeOnlineUsers : onlineUsers;
@@ -50,15 +51,16 @@ const Sidebar: React.FC<SidebarProps> = ({
 
   const handleStatusChange = (status: 'online' | 'busy' | 'offline') => {
     updateStatus(status);
+    setStatusMenuOpen(false); // Close menu after selection
   };
 
   const menuItems = [
     { id: 'dashboard', text: 'Dashboard', icon: <FiHome className="w-5 h-5" />, path: '/?section=dashboard' },
     { id: 'projects', text: 'Projects', icon: <FiFolder className="w-5 h-5" />, path: '/?section=projects' },
     { id: 'team', text: 'Team', icon: <FiUsers className="w-5 h-5" />, path: '/teams' },
-    { id: 'calendar', text: 'Calendar', icon: <FiCalendar className="w-5 h-5" />, path: '/calendar' },
-    { id: 'analytics', text: 'Analytics', icon: <FiBarChart2 className="w-5 h-5" />, path: '/analytics' },
-    { id: 'settings', text: 'Settings', icon: <FiSettings className="w-5 h-5" />, path: '/settings' },
+    { id: 'calendar', text: 'Calendar', icon: <FiCalendar className="w-5 h-5" />, path: '/?section=calendar' },
+    { id: 'analytics', text: 'Analytics', icon: <FiBarChart2 className="w-5 h-5" />, path: '/?section=analytics' },
+    { id: 'settings', text: 'Settings', icon: <FiSettings className="w-5 h-5" />, path: '/?section=settings' },
   ];
 
   const handleMenuClick = (item: typeof menuItems[0]) => {
@@ -154,43 +156,55 @@ const Sidebar: React.FC<SidebarProps> = ({
 
             {/* User Info and Logout */}
             <div className="flex items-center mb-3">
-              <div className="relative group">
-                <div className="w-10 h-10 rounded-full bg-green-500 flex items-center justify-center text-white font-semibold mr-3 cursor-pointer transition-transform hover:scale-105">
+              <div className="relative">
+                <div
+                  onClick={() => setStatusMenuOpen(!statusMenuOpen)}
+                  className="w-10 h-10 rounded-full bg-green-500 flex items-center justify-center text-white font-semibold mr-3 cursor-pointer transition-transform hover:scale-105"
+                >
                   {user?.name?.charAt(0).toUpperCase()}
                   <div className={`absolute bottom-0 right-0 w-3.5 h-3.5 border-2 border-indigo-600 rounded-full ${getStatusColor(currentUserStatus)}`}></div>
                 </div>
 
                 {/* Status Menu */}
-                <div className="absolute bottom-full left-0 mb-0 pb-2 w-40 hidden group-hover:block z-50 transform origin-bottom-left transition-all duration-200">
-                  <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl border border-gray-200 dark:border-gray-700 overflow-hidden">
-                    <div className="p-1">
-                      <div className="px-3 py-2 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                        Set Status
+                {statusMenuOpen && (
+                  <>
+                    {/* Backdrop to close menu when clicking outside */}
+                    <div
+                      className="fixed inset-0 z-40"
+                      onClick={() => setStatusMenuOpen(false)}
+                    />
+                    <div className="absolute bottom-full left-0 mb-2 w-40 z-50">
+                      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl border border-gray-200 dark:border-gray-700 overflow-hidden">
+                        <div className="p-1">
+                          <div className="px-3 py-2 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                            Set Status
+                          </div>
+                          <button
+                            onClick={() => handleStatusChange('online')}
+                            className={`w-full text-left px-3 py-2 text-sm rounded flex items-center gap-2 transition-colors ${currentUserStatus === 'online' ? 'bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-300' : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'}`}
+                          >
+                            <div className="w-2 h-2 rounded-full bg-green-500"></div>
+                            Online
+                          </button>
+                          <button
+                            onClick={() => handleStatusChange('busy')}
+                            className={`w-full text-left px-3 py-2 text-sm rounded flex items-center gap-2 transition-colors ${currentUserStatus === 'busy' ? 'bg-yellow-50 dark:bg-yellow-900/20 text-yellow-700 dark:text-yellow-300' : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'}`}
+                          >
+                            <div className="w-2 h-2 rounded-full bg-yellow-500"></div>
+                            Busy
+                          </button>
+                          <button
+                            onClick={() => handleStatusChange('offline')}
+                            className={`w-full text-left px-3 py-2 text-sm rounded flex items-center gap-2 transition-colors ${currentUserStatus === 'offline' ? 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300' : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'}`}
+                          >
+                            <div className="w-2 h-2 rounded-full bg-gray-400"></div>
+                            Offline
+                          </button>
+                        </div>
                       </div>
-                      <button
-                        onClick={() => handleStatusChange('online')}
-                        className={`w-full text-left px-3 py-2 text-sm rounded flex items-center gap-2 transition-colors ${currentUserStatus === 'online' ? 'bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-300' : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'}`}
-                      >
-                        <div className="w-2 h-2 rounded-full bg-green-500"></div>
-                        Online
-                      </button>
-                      <button
-                        onClick={() => handleStatusChange('busy')}
-                        className={`w-full text-left px-3 py-2 text-sm rounded flex items-center gap-2 transition-colors ${currentUserStatus === 'busy' ? 'bg-yellow-50 dark:bg-yellow-900/20 text-yellow-700 dark:text-yellow-300' : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'}`}
-                      >
-                        <div className="w-2 h-2 rounded-full bg-yellow-500"></div>
-                        Busy
-                      </button>
-                      <button
-                        onClick={() => handleStatusChange('offline')}
-                        className={`w-full text-left px-3 py-2 text-sm rounded flex items-center gap-2 transition-colors ${currentUserStatus === 'offline' ? 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300' : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'}`}
-                      >
-                        <div className="w-2 h-2 rounded-full bg-gray-400"></div>
-                        Offline
-                      </button>
                     </div>
-                  </div>
-                </div>
+                  </>
+                )}
               </div>
 
               <div className="flex-1 min-w-0">
