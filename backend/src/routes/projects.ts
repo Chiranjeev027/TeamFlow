@@ -412,10 +412,36 @@ router.get('/:id/analytics', protect, async (req: any, res) => {
 // POST /api/projects/analytics/batch
 router.post('/analytics/batch', protect, async (req: any, res) => {
   try {
+    console.log('📊 Batch analytics request received');
+    console.log('Request body:', JSON.stringify(req.body));
+    console.log('Request headers:', req.headers['content-type']);
+
     const { projectIds } = req.body;
-    if (!Array.isArray(projectIds) || projectIds.length === 0) {
+
+    // Enhanced validation with detailed error messages
+    if (!projectIds) {
+      console.error('❌ projectIds is undefined or null');
+      return res.status(400).json({
+        error: 'projectIds is required',
+        received: req.body
+      });
+    }
+
+    if (!Array.isArray(projectIds)) {
+      console.error('❌ projectIds is not an array:', typeof projectIds);
+      return res.status(400).json({
+        error: 'projectIds must be an array',
+        received: typeof projectIds,
+        value: projectIds
+      });
+    }
+
+    if (projectIds.length === 0) {
+      console.error('❌ projectIds array is empty');
       return res.status(400).json({ error: 'projectIds must be a non-empty array' });
     }
+
+    console.log(`✅ Valid request with ${projectIds.length} project IDs`);
 
     const objectIds = projectIds.map((id: string) => new mongoose.Types.ObjectId(id));
     const now = new Date();

@@ -70,27 +70,31 @@ const ProjectList = forwardRef<ProjectListRef, ProjectListProps>(({ onProjectCre
       const data = await response.json();
       setProjects(data);
       const progressObj: Record<string, number> = {};
-      try {
-        const ids = data.map((p: Project) => p._id);
-        const token = localStorage.getItem('token');
-        const resp = await apiFetch('/api/projects/analytics/batch', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-          body: JSON.stringify({ projectIds: ids })
-        });
 
-        if (resp.ok) {
-          const analyticsMap = await resp.json();
-          for (const id of ids) {
-            progressObj[id] = analyticsMap[id]?.completionRate || 0;
+      // Only fetch analytics if there are projects
+      if (data.length > 0) {
+        try {
+          const ids = data.map((p: Project) => p._id);
+          const token = localStorage.getItem('token');
+          const resp = await apiFetch('/api/projects/analytics/batch', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+            body: JSON.stringify({ projectIds: ids })
+          });
+
+          if (resp.ok) {
+            const analyticsMap = await resp.json();
+            for (const id of ids) {
+              progressObj[id] = analyticsMap[id]?.completionRate || 0;
+            }
+            setProjectAnalytics(analyticsMap);
+          } else {
+            ids.forEach((id: string) => { progressObj[id] = 0; });
           }
-          setProjectAnalytics(analyticsMap);
-        } else {
-          ids.forEach((id: string) => { progressObj[id] = 0; });
+        } catch (err) {
+          data.forEach((p: Project) => { progressObj[p._id] = 0; });
+          setProjectAnalytics({});
         }
-      } catch (err) {
-        data.forEach((p: Project) => { progressObj[p._id] = 0; });
-        setProjectAnalytics({});
       }
       setProjectProgress(progressObj);
     } catch (error) {
@@ -138,7 +142,7 @@ const ProjectList = forwardRef<ProjectListRef, ProjectListProps>(({ onProjectCre
 
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch(`/api/projects/${projectToEdit._id}`, {
+      const response = await apiFetch(`/api/projects/${projectToEdit._id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -177,7 +181,7 @@ const ProjectList = forwardRef<ProjectListRef, ProjectListProps>(({ onProjectCre
 
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch(`/api/projects/${projectToDelete._id}`, {
+      const response = await apiFetch(`/api/projects/${projectToDelete._id}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${token}`

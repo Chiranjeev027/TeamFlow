@@ -37,26 +37,28 @@ const ProjectProgressList: React.FC<ProjectProgressListProps> = () => {
             if (response.ok) {
                 const data = await response.json();
 
-                // Fetch progress for each project
+                // Only fetch progress for each project if there are projects
                 const progressData: Record<string, number> = {};
-                try {
-                    const progressRes = await apiFetch('/api/projects/analytics/batch', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'Authorization': `Bearer ${token}`
-                        },
-                        body: JSON.stringify({ projectIds: data.map((p: Project) => p._id) })
-                    });
-
-                    if (progressRes.ok) {
-                        const analyticsMap = await progressRes.json();
-                        data.forEach((project: Project) => {
-                            progressData[project._id] = analyticsMap[project._id]?.completionRate || 0;
+                if (data.length > 0) {
+                    try {
+                        const progressRes = await apiFetch('/api/projects/analytics/batch', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'Authorization': `Bearer ${token}`
+                            },
+                            body: JSON.stringify({ projectIds: data.map((p: Project) => p._id) })
                         });
+
+                        if (progressRes.ok) {
+                            const analyticsMap = await progressRes.json();
+                            data.forEach((project: Project) => {
+                                progressData[project._id] = analyticsMap[project._id]?.completionRate || 0;
+                            });
+                        }
+                    } catch (err) {
+                        console.warn('Could not fetch progress data');
                     }
-                } catch (err) {
-                    console.warn('Could not fetch progress data');
                 }
 
                 // Sort by most recently updated
