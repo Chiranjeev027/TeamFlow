@@ -14,6 +14,7 @@ import AnalyticsDashboard from '../components/AnalyticsDashboard';
 import CalendarContent from '../components/CalendarContent';
 import Sidebar from '../components/Sidebar';
 import { useSocket } from '../context/SocketContext';
+import { useDashboardContext } from '../context/DashboardContext';
 import TopBar from '../components/TopBar';
 import RecentActivityFeed from '../components/RecentActivityFeed';
 import UpcomingDeadlines from '../components/UpcomingDeadlines';
@@ -51,14 +52,10 @@ const Dashboard: React.FC<DashboardProps> = ({ toggleDarkMode, darkMode }) => {
   const [searchParams] = useSearchParams();
   const [activeSection, setActiveSection] = useState('dashboard');
   const [loading, setLoading] = useState(true);
-  const [stats, setStats] = useState<DashboardStats>({
-    totalProjects: 0,
-    totalTeamMembers: 0,
-    activeProjects: 0,
-    completedTasks: 0,
-    completionRate: 0
-  });
-  const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
+
+  // Use context for cached dashboard data
+  const { stats, setStats, teamMembers, setTeamMembers, hasData, setHasData } = useDashboardContext();
+
   const { onlineUsers } = useSocket();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
@@ -168,6 +165,7 @@ const Dashboard: React.FC<DashboardProps> = ({ toggleDarkMode, darkMode }) => {
 
       setStats(newStats);
       setTeamMembers(uniqueTeamMembers);
+      setHasData(true); // Mark that we have data
 
     } catch (error) {
       console.error('Error fetching dashboard data:', error);
@@ -177,8 +175,22 @@ const Dashboard: React.FC<DashboardProps> = ({ toggleDarkMode, darkMode }) => {
   };
 
   useEffect(() => {
-    fetchDashboardData();
+    // Only fetch if we don't have cached data
+    if (!hasData) {
+      fetchDashboardData();
+    } else {
+      // We have cached data, just stop loading
+      setLoading(false);
+    }
   }, []);
+
+  // Handle section query parameter for navigation
+  useEffect(() => {
+    const section = searchParams.get('section');
+    if (section && ['dashboard', 'projects', 'team', 'calendar', 'analytics', 'settings'].includes(section)) {
+      setActiveSection(section);
+    }
+  }, [searchParams]);
 
   // Listen for task updates via socket to refresh stats in real-time
   const { socket } = useSocket();

@@ -289,7 +289,7 @@ const TaskBoard: React.FC = () => {
         <div className="flex justify-between items-center mb-6">
           <div className="flex items-start gap-3">
             <button
-              onClick={() => navigate('/', { replace: false })}
+              onClick={() => navigate('/?section=projects', { replace: false })}
               className="p-2 mt-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
               title="Back to Projects"
             >
@@ -383,7 +383,15 @@ const TaskBoard: React.FC = () => {
 
         {/* Alerts */}
         {getTeamCount() === 1 && (
-          <Alert severity="info" sx={{ mb: 2 }}>
+          <Alert
+            severity="info"
+            sx={{
+              mb: 2,
+              bgcolor: 'rgb(30, 58, 138)', // blue-900
+              color: 'white',
+              '& .MuiAlert-icon': { color: '#60a5fa' }
+            }}
+          >
             <strong>Want to collaborate?</strong> Click "Team" to invite members to this project.
           </Alert>
         )}
@@ -420,7 +428,12 @@ const TaskBoard: React.FC = () => {
         </div>
 
         {/* Dialogs */}
-        <Dialog open={createDialogOpen} onClose={() => setCreateDialogOpen(false)} maxWidth="sm" fullWidth>
+        <Dialog
+          open={createDialogOpen}
+          onClose={() => setCreateDialogOpen(false)}
+          maxWidth="sm"
+          fullWidth
+        >
           <TaskForm
             project={project}
             onSubmit={createTask}
@@ -431,7 +444,12 @@ const TaskBoard: React.FC = () => {
           />
         </Dialog>
 
-        <Dialog open={editDialogOpen} onClose={() => setEditDialogOpen(false)} maxWidth="sm" fullWidth>
+        <Dialog
+          open={editDialogOpen}
+          onClose={() => setEditDialogOpen(false)}
+          maxWidth="sm"
+          fullWidth
+        >
           <TaskForm
             task={editingTask}
             project={project}
