@@ -148,7 +148,9 @@ const Sidebar: React.FC<SidebarProps> = ({
                     })}
                   </div>
                   <span className="text-xs text-white/70">
-                    {currentOnlineUsers.filter(u => u.status === 'online').length} online
+                    {currentOnlineUsers.filter(u =>
+                      u.status === 'online' && teamMembers.some(m => m._id === u.userId)
+                    ).length} online
                   </span>
                 </div>
               </div>
