@@ -215,12 +215,13 @@ const Sidebar: React.FC<SidebarProps> = ({
                     {user?.email}
                   </p>
                   <span className="text-white/60">•</span>
-                  <span className={`text-xs capitalize ${currentUserStatus === 'online' ? 'text-green-300' :
-                    currentUserStatus === 'busy' ? 'text-yellow-300' :
-                      'text-gray-400'
+                  <div className={`flex items-center gap-1 text-xs ${currentUserStatus === 'online' ? 'text-green-300' :
+                      currentUserStatus === 'busy' ? 'text-yellow-300' :
+                        'text-gray-400'
                     }`}>
-                    {currentUserStatus}
-                  </span>
+                    <div className={`w-1.5 h-1.5 rounded-full ${getStatusColor(currentUserStatus)}`}></div>
+                    <span className="capitalize">{currentUserStatus}</span>
+                  </div>
                 </div>
               </div>
             </div>
