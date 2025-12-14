@@ -123,7 +123,7 @@ const Sidebar: React.FC<SidebarProps> = ({
         {/* Sidebar Footer */}
         <div className="mt-auto p-4">
           <div className="border-t border-white/20 pt-4 mb-4">
-            {/* Team Online Status */}
+            {/* Team Online Status - Only show team member avatars if there are team members */}
             {teamMembers.length > 0 && (
               <div className="mb-4">
                 <p className="text-sm text-white/80 mb-2">
@@ -154,7 +154,7 @@ const Sidebar: React.FC<SidebarProps> = ({
               </div>
             )}
 
-            {/* User Info and Logout */}
+            {/* User Info and Status - Always visible */}
             <div className="flex items-center mb-3">
               <div className="relative">
                 <div
