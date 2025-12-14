@@ -162,7 +162,6 @@ const Sidebar: React.FC<SidebarProps> = ({
                   className="w-10 h-10 rounded-full bg-green-500 flex items-center justify-center text-white font-semibold mr-3 cursor-pointer transition-transform hover:scale-105"
                 >
                   {user?.name?.charAt(0).toUpperCase()}
-                  <div className={`absolute bottom-0 right-0 w-3.5 h-3.5 border-2 border-indigo-600 rounded-full ${getStatusColor(currentUserStatus)}`}></div>
                 </div>
 
                 {/* Status Menu */}
