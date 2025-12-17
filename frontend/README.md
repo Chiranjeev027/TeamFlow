@@ -35,15 +35,28 @@ npm install
 
 ### 2. Environment Configuration
 
-Create a `.env` file in the frontend root directory:
+> [!TIP]
+> See [.env.example](./.env.example) for the complete environment configuration template.
 
-```env
-# API Base URL
-VITE_API_URL=http://localhost:5000
+**Quick Setup:**
 
-# Optional: Enable development tools
-VITE_DEV_MODE=true
+```bash
+# Copy the example file
+cp .env.example .env
+
+# Edit .env with your backend API URL
+# Local development: http://localhost:5000
+# Production: your deployed backend URL
 ```
+
+**Environment Variables:**
+
+| Variable | Description | Development | Production |
+|----------|-------------|-------------|------------|
+| `VITE_API_URL` | Backend API endpoint | `http://localhost:5000` | Your deployed backend URL |
+
+> [!NOTE]
+> The backend server must be running for the frontend to function properly. See [Backend README](../backend/README.md) for setup instructions.
 
 ## 🎯 Running the Application
 

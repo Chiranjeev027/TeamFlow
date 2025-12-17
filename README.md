@@ -102,31 +102,57 @@ npm install
 
 ### 3. Environment Configuration
 
-#### Backend Environment Variables
-Create a `.env` file in the `backend` directory:
+> [!IMPORTANT]
+> **Security First**: Never commit `.env` files to version control. All sensitive credentials should be stored in environment variables and kept secret.
 
-```env
-# Server Configuration
-PORT=5000
-NODE_ENV=development
+#### Backend Environment Setup
 
-# MongoDB Configuration
-MONGODB_URI=mongodb+srv://<username>:<password>@cluster.mongodb.net/teamflow?retryWrites=true&w=majority
+1. **Copy the example file**:
+   ```bash
+   cd backend
+   cp .env.example .env
+   ```
 
-# JWT Secret
-JWT_SECRET=your_super_secret_jwt_key_here_change_in_production
+2. **Configure your environment variables** in `backend/.env`:
 
-# Client URL (for CORS)
-CLIENT_URL=http://localhost:3000
-```
+   | Variable | Description | Example |
+   |----------|-------------|---------|
+   | `PORT` | Backend server port | `5000` |
+   | `NODE_ENV` | Environment mode | `development` or `production` |
+   | `MONGODB_URI` | MongoDB connection string | Get from [MongoDB Atlas](https://www.mongodb.com/cloud/atlas) |
+   | `JWT_SECRET` | Secret key for JWT tokens | Generate using method below ⬇️ |
+   | `CLIENT_URL` | Frontend URL for CORS | `http://localhost:3000` (dev) |
 
-#### Frontend Environment Variables
-Create a `.env` file in the `frontend` directory:
+3. **Generate a secure JWT secret**:
+   ```bash
+   # Using Node.js
+   node -e "console.log(require('crypto').randomBytes(64).toString('hex'))"
+   
+   # Using OpenSSL
+   openssl rand -hex 64
+   ```
 
-```env
-# API Base URL
-VITE_API_URL=http://localhost:5000
-```
+> [!WARNING]
+> **Production Deployment**: Always use strong, randomly generated secrets in production. Never use example values or weak passwords.
+
+#### Frontend Environment Setup
+
+1. **Copy the example file**:
+   ```bash
+   cd frontend
+   cp .env.example .env
+   ```
+
+2. **Configure your environment variables** in `frontend/.env`:
+
+   | Variable | Description | Development | Production |
+   |----------|-------------|-------------|------------|
+   | `VITE_API_URL` | Backend API URL | `http://localhost:5000` | Your deployed backend URL |
+
+> [!TIP]
+> For detailed environment configuration, see:
+> - [backend/.env.example](./backend/.env.example) - Complete backend configuration template
+> - [frontend/.env.example](./frontend/.env.example) - Complete frontend configuration template
 
 ## 🎯 Quick Start
 

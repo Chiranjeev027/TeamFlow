@@ -33,22 +33,31 @@ npm install
 
 ### 2. Environment Configuration
 
-Create a `.env` file in the backend root directory:
+> [!IMPORTANT]
+> This repository includes a [.env.example](./.env.example) file with all required environment variables. Never commit your actual `.env` file to version control.
 
-```env
-# Server Configuration
-PORT=5000
-NODE_ENV=development
+**Quick Setup:**
 
-# MongoDB Configuration
-MONGODB_URI=mongodb+srv://<username>:<password>@cluster.mongodb.net/teamflow?retryWrites=true&w=majority
+```bash
+# Copy the example file
+cp .env.example .env
 
-# JWT Configuration
-JWT_SECRET=your_super_secret_jwt_key_here_change_in_production
-
-# Client URL (for CORS)
-CLIENT_URL=http://localhost:3000
+# Edit .env with your actual values
+# See .env.example for detailed instructions
 ```
+
+**Required Environment Variables:**
+
+| Variable | Description | Required |
+|----------|-------------|----------|
+| `MONGODB_URI` | MongoDB connection string from Atlas | ✅ Yes |
+| `JWT_SECRET` | Secure random secret (min 32 chars) | ✅ Yes |
+| `PORT` | Server port | Optional (default: 5000) |
+| `NODE_ENV` | Environment mode | Optional (default: development) |
+| `CLIENT_URL` | Frontend URL for CORS | Optional (default: http://localhost:3000) |
+
+> [!WARNING]
+> **Security Critical**: Generate a strong JWT secret for production. See [.env.example](./.env.example) for instructions using Node.js crypto or OpenSSL.
 
 ### 3. MongoDB Setup
 
